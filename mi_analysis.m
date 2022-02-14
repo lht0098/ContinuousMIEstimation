@@ -252,7 +252,7 @@ classdef mi_analysis < handle
                
                 button = listdlg('PromptString', promptMessage, 'ListString', discard_reasons);
 
-                if ~strcmp(discard_reasons{button}, 'Do NOT discard any data')
+                if ~any(strcmp(discard_reasons(button), 'Do NOT discard any data')) 
                     
                     % Identify reasons to discard data:
                     discard = discard_reasons(button,:);
@@ -263,6 +263,9 @@ classdef mi_analysis < handle
                     MIcore = obj.arrMIcore(keep_flag,:); 
                     MIs = MIs(keep_flag);
                 else
+                    if length(button) > 1
+                        warning('Do not discard data selected with other discard reasons. Proceeding without discarding data.')
+                    end
                     MIcore = obj.arrMIcore;
                 end
             else
@@ -290,6 +293,7 @@ classdef mi_analysis < handle
 
             end
             
+	    % Sanity check
             if obj.discard_omittedData
                 if ~ismembertol(test_val, 1, 1e-12); error('Error: Re-weighted probability terms do not sum to one.'); end
             end

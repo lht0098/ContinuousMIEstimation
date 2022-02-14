@@ -5,7 +5,7 @@ classdef calc_count_count < mi_analysis
     %   Detailed explanation goes here
     
     properties
-        
+        discard_omittedData = 0; %RC - not relevant for count_count subclass, but necessary for mi_analysis to run. 
     end
     
     methods
