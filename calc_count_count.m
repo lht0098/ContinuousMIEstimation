@@ -65,7 +65,8 @@ classdef calc_count_count < mi_analysis
             % Set groups that will serve as x variable
             % RC20191210: Nemenman code automatically adds noise. Removed
             % the extra noise
-            xGroups{1,1} = x;
+            %x' so that the format of the spike count variable is a column vector
+            xGroups{1,1} = x';
 
             % Next find spike count for neuron 2
             y_name = obj.varNames{2};
@@ -81,7 +82,9 @@ classdef calc_count_count < mi_analysis
             % Set groups that will serve as y variable
             % RC20191210: Nemenman code automatically adds noise. Removed
             % the extra noise
-            yGroups{1,1} = y;
+            % y' so that the format of the spike count variable is a column
+            % vector for compatibility with core class. 
+            yGroups{1,1} = y';
 
             % Set coefficients for groups
             coeffs = {1};
