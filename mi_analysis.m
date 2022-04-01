@@ -12,6 +12,9 @@ classdef mi_analysis < handle
         % BC: This will be a list/cell array of objMIcore instances (may need to index)
         % cell array with structure:{{objMICore} {coeff} {k-value} {MIestimate} {Error} {coreID}}
         arrMIcore % Reference to MIcore object 
+
+        %%% 20220401 LHT
+        data_frac_stab_mat % data fraction stability matrix for auditing
 	
         sim_manager % Sim manager reference object
         
