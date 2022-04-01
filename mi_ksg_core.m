@@ -536,6 +536,7 @@ classdef mi_ksg_core < handle
             stab_mat = triu(dataFrac_stab_matrix);
             
             % First, assess stability of each data frac comparison
+            %%% 20220331 LHT: stability_boolean = stab_mat < 1;
             stability_boolean = stab_mat < 1.5;
             
             % Determine if the frist four data fracs are stable
