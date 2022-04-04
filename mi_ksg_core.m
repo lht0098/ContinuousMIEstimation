@@ -17,6 +17,12 @@ classdef mi_ksg_core < handle
         opt_k % optimized k value; if -1, only runs MI calculation without any error estimate
         
         data_fracs = 10 % number of data fractions
+
+        %%% 20220404 LHT 
+        data_frac_stab_mat % data fraction stability matrix for auditing
+
+        %%% 20220404 LHT
+        k_val_stab_mat % k value stability matrix for auditing 
         
         append % Taken from analysis object. 
                % Specify whether to re-run all analysis or to just run analysis for k-values that have not been previously included. 
