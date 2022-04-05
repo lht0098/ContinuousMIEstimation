@@ -381,7 +381,7 @@ classdef mi_ksg_core < handle
                     obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2), size(ks,2))
                 end
                 %%% put matrix in the next page 
-                obj.k_val_stab_mat(:,:,ks(ik)) = k_stab;
+                obj.k_val_stab_mat(:,:,ks(ik)) = get_stabMat_kvals(obj, ks);
             end    
             
             % Get MIs and STDs to return to core objects
