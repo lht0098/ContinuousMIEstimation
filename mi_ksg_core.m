@@ -328,12 +328,13 @@ classdef mi_ksg_core < handle
             for ik = 1:length(ks)
                 % Find data fraction stability matrix for each k
                 dataFrac_stab = get_stabMat_dataFrac(obj,ks(ik));
-                %%% 20220404 LHT L333-L335: initializing 9x10x10 matrix to store all data
-                %%% fraction matrices of all k's
+                %%% 20220404 LHT L331-L338: 
+                %%% initialize matrix to store all data fraction 
+                %%% stability matrices
                 if ik == 1
                     obj.data_frac_stab_mat = zeros(size(dataFrac_stab,1), size(dataFrac_stab,2), size(ks,2));
                 end 
-                %%% 20220404 LHT: store the matrix for each iteration
+                %%% put the matrix in the next page
                 obj.data_frac_stab_mat(:,:,ks(ik)) = dataFrac_stab;
                 
                 % Get stability metric value for each k
@@ -372,6 +373,16 @@ classdef mi_ksg_core < handle
                 k_stab = [];
                 
             end
+
+            %%% 20220404 LHT L376-384: K stability matrices for auditing
+            for ik = 1:length(ks)
+                %%% initialize matrix to store all k stability matrices
+                if i == 1
+                    obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2), size(ks,2))
+                end
+                %%% put matrix in the next page 
+                obj.k_val_stab_mat(:,:,ks(ik)) = k_stab;
+            end    
             
             % Get MIs and STDs to return to core objects
             final_MIs = [];
