@@ -324,12 +324,15 @@ classdef mi_ksg_core < handle
             k_vals = [obj.mi_data{:,4}];
             ks = unique(k_vals);
             weighted_k = zeros(size(ks)); 
-            %%% 20220404 LHT: initializing 9x10x10 matrix to store all data
-            %%% fraction matrices of all k's 
-            obj.data_frac_stab_mat = zeros(10, 10, size(ks,2));
+             
             for ik = 1:length(ks)
                 % Find data fraction stability matrix for each k
                 dataFrac_stab = get_stabMat_dataFrac(obj,ks(ik));
+                %%% 20220404 LHT L333-L335: initializing 9x10x10 matrix to store all data
+                %%% fraction matrices of all k's
+                if ik == 1
+                    obj.data_frac_stab_mat = zeros(size(dataFrac_stab,1), size(dataFrac_stab,2), size(ks,2));
+                end 
                 %%% 20220404 LHT: store the matrix for each iteration
                 obj.data_frac_stab_mat(:,:,ks(ik)) = dataFrac_stab;
                 
