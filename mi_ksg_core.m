@@ -375,14 +375,10 @@ classdef mi_ksg_core < handle
             end
 
             %%% 20220404 LHT L376-384: K stability matrices for auditing
-            for ik = 1:length(ks)
-                %%% initialize matrix to store all k stability matrices
-                if i == 1
-                    obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2), size(ks,2))
-                end
-                %%% put matrix in the next page 
-                obj.k_val_stab_mat(:,:,ks(ik)) = get_stabMat_kvals(obj, ks);
-            end    
+            %%% initialize matrix to store all k stability matrices
+            obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2))
+            %%% save the matrix
+            obj.k_val_stab_mat = get_stabMat_kvals(obj, ks); 
             
             % Get MIs and STDs to return to core objects
             final_MIs = [];
