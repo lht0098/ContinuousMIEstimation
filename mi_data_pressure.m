@@ -7,11 +7,19 @@ classdef mi_data_pressure < mi_data_behavior
    properties
 %        omitOutliers % boolean to indicate whether to omit cycles with outlier lengths from analysis
 %        outliers
+       method       %   method for determining pressure cycles
+       threshold    %   threshold value if using method == threshold
+
    end
+
    methods
        function obj = mi_data_pressure(ID, varargin)
             % Required arguments: ID
+
             obj@mi_data_behavior(ID,varargin{:}); 
+
+            obj.method = '';
+            obj.threshold = nan;
        end
        
        %function set_data_files(obj, arrDataFiles, varargin)
@@ -25,18 +33,19 @@ classdef mi_data_pressure < mi_data_behavior
            
            v = obj.verbose;
 
+           default_folder = '';
+           default_files = {};
+           default_ext = '.csv';
+
            if nargin > 1
                p = inputParser;
                
-               default_folder = '';
                validate_folder = @(x) assert(ischar(x) && isfolder(x), 'Parameter folder must be a folder name as a string');
                addParameter(p, 'folder', default_folder, validate_folder);
     
-               default_files = {};
                validate_files = @(x) assert(iscell(x), 'Parameter files must be cell of strings');
                addParameter(p, 'files', default_files, validate_files);
     
-               default_ext = '.txt';
                validate_ext = @(x) assert(ischar(x) && (strfind(x, '.') == 1), 'Parameter ext must be a string that begins with a period');
                addParameter(p, 'ext', default_ext, validate_ext);
     
@@ -46,9 +55,9 @@ classdef mi_data_pressure < mi_data_behavior
                fldr = p.Results.folder;
                fext = p.Results.ext;
            else
-               fnames = {};
-               fldr = '';
-               fext = '.txt';
+               fnames = default_files;
+               fldr = default_fldr;
+               fext = default_ext;
                 
            end
 
@@ -146,74 +155,136 @@ classdef mi_data_pressure < mi_data_behavior
 %            r = cycleTimes_rmOutliers;
 %        end
        
-       function build_behavior(obj)
-            % Process behavior pulls data to build raw waveform matrix
+        function build_behavior(obj, varargin)
+            % INPUTS
+            % cycle_times       array of cycle onsets and offsets
+            % method            hilbert - use hilbert transform for cycles
+            %                   threshold - use threshold crossing
+            % threshold         if method == threshold, specify value
+            %
+            % Process behavior pulls data to build waveform matrix
             v = obj.verbose;
+            
+            default_cycleTimes = [];
+            default_method = 'hilbert';
+            default_threshold = 0;
+
+            if nargin > 1
+                p = inputParser;
+
+                validate_cycle_times = @(x) assert(ismatrix(x), 'Parameter cycleTimes must be an array.');
+                addParameter(p, 'cycleTimes', default_ext, validate_ext);
+    
+                validate_method = @(x) assert(ischar(x) && (strcmp(x,'hilbert') | strcmp(x,'threshold')), 'Parameter method must be either hilbert or threshold.');
+                addParameter(p, 'mtehod', default_method, validate_method);
+
+                validate_threshold = @(x) assert(isnumeric(x), 'Parameter threshold must be a number.');
+                addParameter(p, 'threshold', default_threshold, validate_threshold);
+
+                p.parse(varargin{:});
+
+                cycleTimes = p.Results.cycleTimes;
+                method = p.Results.method;
+                threshold = p.Results.threshold;
+            else
+                if any(strcmp(fields(obj.data), 'cycleTimes'))
+                    if length(obj.data.cycleTimes) < 1
+                        cycleTimes = default_cycleTimes;
+                    else
+                        cycleTimes = obj.data.cycleTimes;
+                    end
+                else
+                    cycleTimes = default_cycleTimes;
+                end
+
+                if length(obj.method) < 1
+                    method = default_method;
+                else
+                    method = obj.method;
+                end
+
+                if isnan(obj.threshold)
+                    threshold = default_threshold;
+                else
+                    threshold = obj.threshold;
+                end
+            end
+            
+            % check for consistency of parameters
+            assert(size(cycleTimes,2) ~= 2, 'Parameter cycleTimes must have only 2 columns: [cycle onset, cycle offset]');
+            assert(strcmp(method,'hilbert') || strcmp(method,'threshold'), 'Parameter method must be either hilbert or threshold');
+            if strcmp(method,'threshold'); assert(~isnan(threshold), 'Parameter threshold must be numeric.'); end
+
+            
             if v>1; disp([newline '--> Building behavioral data...']); end
             
-            % Find cycle onset times
-            cycle_times = obj.data.cycleTimes.data;
 
-            % Make a cell array to hold cycle data
-            nCycles = size(cycle_times,1);
-            behaviorCycles = cell(nCycles,1);
+%             % Make a cell array to hold cycle data
+%             nCycles = size(cycle_times,1);
+%             behaviorCycles = cell(nCycles,1);
             
             
-            behavOffset = 0;
+%             behavOffset = 0;
             % Iterate and load data file info
 %             for i=1:length(obj.arrFiles)
+            dat_pressure = [];
+            dat_ts = [];
+
             for i=1:length(obj.arrFiles)
-                if obj.verbose > 1
+                if v > 1
                     disp('===== ===== ===== ===== =====');
                     disp(['Processing file ' num2str(i) ' of ' num2str(length(obj.arrFiles))]);
                     disp(['File: ' obj.strFldr '\' obj.arrFiles{i}]);
                 end
-                [pressure_ts, pressure_wav] = read_Intan_RHD2000_nongui_adc(fullfile(obj.strFldr, obj.arrFiles{i}), obj.verbose);
+                [pressure_ts, pressure_wav] = read_Intan_RHD2000_nongui_adc(fullfile(obj.strFldr, obj.arrFiles{i}), v);
 
                 
                 if v>2
                     disp(['Start time: ' num2str(pressure_ts(1)*1000.) ' ms']); 
                     disp(['End time: ' num2str(pressure_ts(end)*1000) ' ms']); 
-                    disp(['Experiment start: ' num2str(min(min(cycle_times))) ' ms']);
-                    disp(['Experiment end: ' num2str(max(max(cycle_times))) ' ms']);
                 end
                 
+                dat_pressure(end+1:end+length(pressure_ts)) = pressure_wav;
+                dat_ts(end+1:end+length(pressure_ts)) = pressure_ts;
+
                 % Filter Pressure Waves
 %                 filterData = obj.filterBehavior(pressure_wav, obj.Fs, filterFreq); % This will change once we update filterBehavior func
-                if v>3; disp('--> --> Filtering data...');end
-                filterData = pressure_wav;
+%                 if v>3; disp('--> --> Filtering data...');end
+%                 filterData = pressure_wav;
 
                 
                 % Find cycles that occur within the limits of the current
                 % data file
-                cycleIxs = cycle_times(:,1) >= pressure_ts(1)*1000. & cycle_times(:,2) <= pressure_ts(end)*1000.;
-                validCycles = cycle_times(cycleIxs,:);
-                tStart = pressure_ts(1)*1000.; % beginning of data file in ms
+%                 cycleIxs = cycle_times(:,1) >= pressure_ts(1)*1000. & cycle_times(:,2) <= pressure_ts(end)*1000.;
+%                 validCycles = cycle_times(cycleIxs,:);
+%                 tStart = pressure_ts(1)*1000.; % beginning of data file in ms
                 
-                if v>3; disp(['# Cycles: ' num2str(sum(cycleIxs))]); end
+%                 if v>3; disp(['# Cycles: ' num2str(sum(cycleIxs))]); end
                 
                 % Assign pressure waves to cell array
                 % Consider alternative ways to save speed here?
-                for iCycle = 1:size(validCycles,1)
-                   % Find cycle start index
-                   cycleStart = ceil((validCycles(iCycle,1)-tStart)*obj.Fs/1000.);
-                   % Find cycle end index
-                   cycleEnd = floor((validCycles(iCycle,2)-tStart)*obj.Fs/1000.);
-                   behaviorCycles{iCycle+behavOffset} = filterData(cycleStart:cycleEnd);
-                end
+%                 for iCycle = 1:size(validCycles,1)
+%                    % Find cycle start index
+%                    cycleStart = ceil((validCycles(iCycle,1)-tStart)*obj.Fs/1000.);
+%                    % Find cycle end index
+%                    cycleEnd = floor((validCycles(iCycle,2)-tStart)*obj.Fs/1000.);
+%                    behaviorCycles{iCycle+behavOffset} = filterData(cycleStart:cycleEnd);
+%                 end
                 
-                behavOffset = behavOffset + size(validCycles,1);
+%                 behavOffset = behavOffset + size(validCycles,1);
                 
                 % Check that number of stored cycles matches the offset
                 % being added to cycle indices. 
-                if ~any(behavOffset == size(find(~cellfun('isempty',behaviorCycles)))); keyboard; error('Number of stored cycles does not match the offset cycle index'); end
+%                 if ~any(behavOffset == size(find(~cellfun('isempty',behaviorCycles)))); keyboard; error('Number of stored cycles does not match the offset cycle index'); end
                 
             end
             
-            obj.rawBehav = behaviorCycles;
+%             obj.rawBehav = behaviorCycles;
             % Check that number of stored cycles matches the final value of the offset. 
-            if ~any(behavOffset == size(find(~cellfun('isempty',obj.rawBehav)))); error('Total number of stored cycles does not match the final offset of cycle index'); end
+%             if ~any(behavOffset == size(find(~cellfun('isempty',obj.rawBehav)))); error('Total number of stored cycles does not match the final offset of cycle index'); end
             
+
+
             if v>0; disp('COMPLETE: Behavioral data loaded!'); end
        end
        
