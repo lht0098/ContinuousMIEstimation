@@ -14,38 +14,112 @@ classdef mi_data_pressure < mi_data_behavior
             obj@mi_data_behavior(ID,varargin{:}); 
        end
        
-       function set_data_files(obj, arrDataFiles, varargin)
-           % Input needs to be cell array of file names
-           % Optional folder argument defaults to current working directory
+       %function set_data_files(obj, arrDataFiles, varargin)
+       function set_data_files(obj, varargin)
+           % Input args:
+           % folder     specify folder where data files are saved
+           % files      specify cell array of file names (concatenated to
+           %            folder argin if specified)
+           % ext        specify file extension to use (only one ext
+           %            allowed)
+           
            v = obj.verbose;
-           
-           p = inputParser;
-           
-           % Required input: arrDataFiles
-           validate_arrDataFiles = @(x) assert(iscell(x) && ischar(x{1}), 'arrDataFiles needs to be cell array of string file names');
-           p.addRequired('arrDataFiles', validate_arrDataFiles);
-           
-           % Optional input: strFldrPath
-           default_strFldrPath = pwd;
-           validate_strFldrPath = @(x) assert(true, 'strFldrPath needs to be a string path');
-           p.addOptional('strFldrPath', default_strFldrPath, validate_strFldrPath);
-           
-           p.parse(arrDataFiles, varargin{:});
 
-           if v>1; disp([newline '--> Setting data file info...']); end
-           
-           if isfolder(p.Results.strFldrPath)
-               if v>2; disp(['--> --> Folder exists: ' p.Results.strFldrPath]); end
-               filepaths = fullfile(p.Results.strFldrPath, p.Results.arrDataFiles);
-               for i=1:length(filepaths)
-                   if ~isfile(filepaths(i)); error(['File does not exist: ' filepaths(i)]); end
-                   if v>2 && isfile(filepaths(i)); disp(['File: ' filepaths(i)]); end
-               end
-                obj.arrFiles = p.Results.arrDataFiles;
-                obj.strFldr = p.Results.strFldrPath;
+           if nargin > 1
+               p = inputParser;
+               
+               default_folder = '';
+               validate_folder = @(x) assert(ischar(x) && isfolder(x), 'Parameter folder must be a folder name as a string');
+               addParameter(p, 'folder', default_folder, validate_folder);
+    
+               default_files = {};
+               validate_files = @(x) assert(iscell(x), 'Parameter files must be cell of strings');
+               addParameter(p, 'files', default_files, validate_files);
+    
+               default_ext = '.txt';
+               validate_ext = @(x) assert(ischar(x) && (strfind(x, '.') == 1), 'Parameter ext must be a string that begins with a period');
+               addParameter(p, 'ext', default_ext, validate_ext);
+    
+               p.parse(varargin{:});
+
+               fnames = p.Results.files;
+               fldr = p.Results.folder;
+               fext = p.Results.ext;
            else
-               error(['strFldrPath does not exist: ' p.Results.strFldrPath]);
+               fnames = {};
+               fldr = '';
+               fext = '.txt';
+                
            end
+
+           % if no folder and no files specified, user needs to choose folder for data
+           if length(fnames) == 0 && length(fldr) == 0
+               if v>0; disp([newline 'Please select the folder where your data are saved or select one or more data files...']); end
+               
+               strOpts = {'Select file...', 'Select folder...'};
+               s = listdlg('PromptString', 'Select a file:', 'SelectionMode','single','ListString',strOpts);
+               if s==1
+                   [fnames,fldr] = uigetfile('*', 'MultiSelect', 'on');
+
+                   [filepath,name,ext] = fileparts(fnames{1});
+                   if ~strcmp(fext, ext)
+                           disp([newline 'File extension does not match specified/default data file extension']);
+                           disp(['Specified/default data file extension: ' fext]);
+                           disp(['Data file extension of selected data file: ' ext]);
+                       s = input('Do you want to use the extension of the selected data file? (y,[n])', 's');
+                       if strcmp(s, 'y') || strcmp(s,'Y'); fext = ext; end
+                   end
+
+                   for i=1:length(fnames)
+                       [filepath,name,ext] = fileparts(fnames{i});
+                       if ~strcmp(fext, ext)
+                           error('File extenions does not match specified data file extension!');
+                       end
+                   end
+               else
+                   fldr = uigetdir('*');
+               end
+           end
+           
+           % if no files are specified, but a folder is specified, confirm
+           % number of data files to process
+           if length(fnames) == 0 && length(fldr) > 0
+               fs = dir([fldr '/*' fext]);
+               if v>0
+                   disp([newline 'Searching in folder: ' fldr]);
+                   disp(['File extension: ' fext]);
+                   disp(['Data files: ' num2str(length(fs))]);
+               end
+               if length(fs) > 0; fnames = {fs.name}; end
+           end
+
+           % if files are specified, check that files exist with folder and
+           % all files have same extension
+           if length(fnames) > 0
+               if v>0
+                   disp([newline 'Data folder: ' fldr]);
+                   disp(['# data files: ' num2str(length(fnames))]);
+               end
+               for i=1:length(fnames)
+                    if isfile(fullfile(fldr, fnames{i}))
+                        if v>0; disp(['File: ' fnames{i}]); end
+                    else
+                        error(['File does not exist: ' fullfile(fldr, fnames{i})]);
+                    end
+
+                    if ~logical(strfind(fnames{i}, fext))
+                        error(['File does not match specified data file extension: ' fnames{i}]);
+                    end
+               end
+           else
+               error('No files found in folder that match data file extension!');
+           end
+
+
+            obj.arrFiles = fnames;
+            obj.strFldr = fldr;
+            obj.strExt = fext;
+
             if v>0; disp('COMPLETE: Data files set!'); end
        end
        
