@@ -328,13 +328,13 @@ classdef mi_ksg_core < handle
             for ik = 1:length(ks)
                 % Find data fraction stability matrix for each k
                 dataFrac_stab = get_stabMat_dataFrac(obj,ks(ik));
-                %%% 20220404 LHT L331-L338: 
-                %%% initialize matrix to store all data fraction 
-                %%% stability matrices
+                % 20220404 LHT L331-L338: 
+                % initialize matrix to store all data fraction 
+                % stability matrices
                 if ik == 1
                     obj.data_frac_stab_mat = zeros(size(dataFrac_stab,1), size(dataFrac_stab,2), size(ks,2));
                 end 
-                %%% put the matrix in the next page
+                % put the matrix in the next page
                 obj.data_frac_stab_mat(:,:,ks(ik)) = dataFrac_stab;
                 
                 % Get stability metric value for each k
@@ -554,6 +554,7 @@ classdef mi_ksg_core < handle
             % a single k value
             
             % Focus only on the upper diagonal to compare forwards only
+            %%% switch to full matrix
             stab_mat = triu(dataFrac_stab_matrix);
             
             % First, assess stability of each data frac comparison
