@@ -555,7 +555,7 @@ classdef mi_ksg_core < handle
             
             % Focus only on the upper diagonal to compare forwards only
             %%% switch to full matrix
-            stab_mat = triu(dataFrac_stab_matrix);
+            stab_mat = dataFrac_stab_matrix;
             
             % First, assess stability of each data frac comparison
             %%% 20220331 LHT: stability_boolean = stab_mat < 1;
