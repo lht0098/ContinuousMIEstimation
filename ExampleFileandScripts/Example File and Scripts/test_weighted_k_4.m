@@ -71,6 +71,7 @@ notBad_Ks = find(weighted_k >= 1);
 
 stable_Ks = notBad_Ks; 
 
+% inserted MI and stds in beginning for use mutiple times later 
 final_MIs = zeros(size(ks));
 final_stds = zeros(size(ks));
 
