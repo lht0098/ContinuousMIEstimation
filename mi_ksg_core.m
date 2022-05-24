@@ -355,6 +355,7 @@ classdef mi_ksg_core < handle
             if length(notBad_Ks) > 1
 
                 % Find matrix to describe stability across good k values
+                %%% initiate array of k stab values 
                 if all(weighted_k < 1)
                     k_stab = [];
                 else
