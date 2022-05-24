@@ -623,29 +623,10 @@ classdef mi_ksg_core < handle
             quality_Ks = stable_Ks(any(stability_boolean.*stability_boolean'-eye(size(stability_boolean))));
 
             %%% determine if the stable k's are within error of each other
-            
-            % Determine whether all ks are within error of each other
-            if all(stability_boolean)
-                k_stability_weights(stable_Ks) = 1;
-            else
-                % If all ks are not within error of each other, check if
-                % they are within error of zero
-                final_MIs = zeros(size(stable_Ks));
-                final_stds = zeros(size(stable_Ks));
-                for ik = 1:length(stable_Ks)
-                    % Run getMIs to return the raw estimated values for all possible k-values
-                    k = ks(ik);
-                    r = get_singlek_mi(obj, k);
-                    ifinal_MI = r.mi;
-                    final_MIs(ik) = ifinal_MI;
-                    ifinal_std = r.err;
-                    final_stds(ik) = ifinal_std;
-                end
-                
-                if all(final_MIs - final_stds <= 0)
-                    k_stability_weights(stable_Ks) = 1;
-                end
-            end
+            if length(quality_Ks) >= 1
+                disp('K values have stable data fractions and are stable across ks')
+                k_stability_weights(quality_Ks) = 1;
+            end 
             
             % Return k stability weight vector
             r = k_stability_weights;
