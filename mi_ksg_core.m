@@ -360,11 +360,8 @@ classdef mi_ksg_core < handle
 
                 % Get stability metric value for k stability
                 %%% initiate array of k stability weights 
-                if all(weighted_k < 1)
-                    k_stability_weights = zeros(size(ks));
-                else
-                    k_stability_weights = test_k_stab(obj, ks, notBad_Ks, k_stab);
-                end
+                k_stability_weights = test_k_stab(obj, ks, notBad_Ks, k_stab);
+
                 % Get new weights for ks according to k stability matrix
                 weighted_k = weighted_k + k_stability_weights;
                 
