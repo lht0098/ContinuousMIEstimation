@@ -414,7 +414,7 @@ classdef mi_ksg_core < handle
 
             %%% 20220404 LHT L376-384: K stability matrices for auditing
             %%% initialize matrix to store all k stability matrices
-            obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2))
+            obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2));
             %%% save the matrix
             obj.k_val_stab_mat = get_stabMat_kvals(obj, ks); 
             
@@ -436,6 +436,7 @@ classdef mi_ksg_core < handle
                MIs = obj.opt_k{1,1};
                errs = obj.opt_k{1,2};
                %%% get best_neighStab
+               best_neighStab = obj.opt_k{1,6};
                
                
                if sum(valid_ks > 2) == 0
