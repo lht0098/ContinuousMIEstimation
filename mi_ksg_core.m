@@ -420,7 +420,7 @@ classdef mi_ksg_core < handle
             
             % Return all values to core object including best_neighStab
             obj.opt_k = {final_MIs, final_stds, weighted_k, ['k < 1: Bad; 1 <= k < 2: Not Bad (Ks have data fraction stability, but do not match each othebr, see matrix); k > 2: Good! Ks in this range match and have consistent ' ...
-                                    'data fractions!'], k_stab};
+                                    'data fractions!'], k_stab, best_neighStab};
         end
         
         function r = get_opk_mi(obj)
