@@ -602,7 +602,7 @@ classdef mi_ksg_core < handle
             
             % Focus only on the upper diagonal to compare forwards only
             %%% look at the full matrix
-            stab_mat = triu(k_stability_matrix);
+            stab_mat = k_stability_matrix;
             
             % First assess stability of each k value comparison
             stability_boolean = stab_mat < 1;
