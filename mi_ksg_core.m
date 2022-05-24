@@ -620,6 +620,7 @@ classdef mi_ksg_core < handle
             k_stability_weights = zeros(size(ks));
 
             %%% initiate quality k's var for evaluation
+            quality_Ks = stable_Ks(any(stability_boolean.*stability_boolean'-eye(size(stability_boolean))));
             
             % Determine whether all ks are within error of each other
             if all(stability_boolean)
