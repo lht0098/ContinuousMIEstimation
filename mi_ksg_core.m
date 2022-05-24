@@ -604,6 +604,8 @@ classdef mi_ksg_core < handle
             %%% look at the full matrix
             stab_mat = k_stability_matrix;
             
+            %%% only evaluate stable k's 
+
             % First assess stability of each k value comparison
             stability_boolean = stab_mat < 1;
             
