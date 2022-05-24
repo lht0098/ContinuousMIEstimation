@@ -356,7 +356,7 @@ classdef mi_ksg_core < handle
 
                 % Find matrix to describe stability across good k values
                 %%% initiate array of k stab values for all ks  
-                k_stab = get_stabMat_kvals(obj, ks(notBad_Ks));
+                k_stab = get_stabMat_kvals(obj, ks);
 
                 % Get stability metric value for k stability
                 %%% initiate array of k stability weights 
