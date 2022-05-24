@@ -613,6 +613,7 @@ classdef mi_ksg_core < handle
             end 
 
             % First assess stability of each k value comparison
+            %%% assess the stability of the stable k's at higher k stability threshold
             stability_boolean = stab_mat < 1;
             
             % Make k stability weight placeholder vector
