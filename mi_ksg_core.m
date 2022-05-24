@@ -377,6 +377,8 @@ classdef mi_ksg_core < handle
                 
             end
 
+            %%% k neighbor stability evaluation
+
             %%% 20220404 LHT L376-384: K stability matrices for auditing
             %%% initialize matrix to store all k stability matrices
             obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2))
