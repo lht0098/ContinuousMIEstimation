@@ -435,6 +435,7 @@ classdef mi_ksg_core < handle
                valid_ks = obj.opt_k{1,3};
                MIs = obj.opt_k{1,1};
                errs = obj.opt_k{1,2};
+               %%% get best_neighStab
                
                
                if sum(valid_ks > 2) == 0
