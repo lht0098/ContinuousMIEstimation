@@ -347,8 +347,14 @@ classdef mi_ksg_core < handle
             
             %%% get MI and std for k neighbor eval and to return to core
             %%% object
-            if all(weighted_k == 0)
-                keyboard
+            final_MIs = zeros(size(ks));
+            final_stds = zeros(size(ks));
+
+            for ik = 1:length(ks)
+                k = ks(ik);
+                r = get_singlek_mi(obj, k);
+                final_MIs(ik) = r.mi;
+                final_stds(ik) = r.err;
             end
 
             % Only check for stability across ks if there are more than 1
@@ -376,16 +382,6 @@ classdef mi_ksg_core < handle
             obj.k_val_stab_mat = zeros(size(k_stab,1), size(k_stab,2))
             %%% save the matrix
             obj.k_val_stab_mat = get_stabMat_kvals(obj, ks); 
-            
-            % Get MIs and STDs to return to core objects
-            final_MIs = [];
-            final_stds = [];
-            for ik = 1:length(ks)
-                k = ks(ik);
-                r = get_singlek_mi(obj, k);
-                final_MIs(ik) = r.mi;
-                final_stds(ik) = r.err;
-            end
             
             % Return all values to core object
             obj.opt_k = {final_MIs, final_stds, weighted_k, ['k < 1: Bad; 1 <= k < 2: Not Bad (Ks have data fraction stability, but do not match each othebr, see matrix); k > 2: Good! Ks in this range match and have consistent ' ...
