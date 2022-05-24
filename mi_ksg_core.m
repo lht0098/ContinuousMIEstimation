@@ -605,6 +605,12 @@ classdef mi_ksg_core < handle
             stab_mat = k_stability_matrix;
             
             %%% only evaluate stable k's 
+            stab_mat_mask = zeros(length(stable_Ks));
+            for i = 1:length(stable_Ks)
+                for j = 1:length(stable_Ks)
+                    stab_mat_mask(i,j) = stab_mat(stable_Ks(i), stable_Ks(j));
+                end
+            end 
 
             % First assess stability of each k value comparison
             stability_boolean = stab_mat < 1;
