@@ -378,6 +378,39 @@ classdef mi_ksg_core < handle
             end
 
             %%% k neighbor stability evaluation
+            if all(weighted_k < 2)
+                k_stab_neighbor_i = find(weighted_k > 1); % get the k vals that have stable data fractions
+                k_stab_neighbor = zeros(2,length(k_stab_neighbor_i)); % initiate an array to hold the std of both neighbors
+                for i=1:length(k_stab_neighbor_i) 
+                    if k_stab_neighbor_i(i)+1 <= length(final_MIs)
+                        k_stab_neighbor(1,i) = abs(final_MIs(k_stab_neighbor_i(i)+1) - final_MIs(k_stab_neighbor_i(i))) / final_stds(k_stab_neighbor_i(i)); 
+                    end
+                    if k_stab_neighbor_i(i)-1 >= 1
+                        k_stab_neighbor(2,i) = abs(final_MIs(k_stab_neighbor_i(i)-1) - final_MIs(k_stab_neighbor_i(i))) / final_stds(k_stab_neighbor_i(i));
+                    end 
+                end 
+
+                % BC: check that stability is within threshold criteria
+                k_stab_neighbor_comp = zeros(1,size(k_stab_neighbor,2)); % initate an array to hold thresh eval
+                k_stab_neighbor_op = zeros(1,size(k_stab_neighbor,2)); % initiate an array to hold stability eval 
+                for i=1:size(k_stab_neighbor,2)
+                    k_stab_neighbor_comp(i) = k_stab_neighbor(1,i) < 1.5 & k_stab_neighbor(2,i) < 1.5; % check that both neighbors are within the threshold
+                    % BC: find k value that optimizes stability with neighbors
+                    if k_stab_neighbor_comp(i) == 1 % check that both neighbors are within thresh
+                        k_stab_neighbor_op(i) = mean(k_stab_neighbor(:,i)); % evaluate the average std
+                    else 
+                        k_stab_neighbor_op(i) = NaN;
+                    end 
+                end 
+
+                if all(isnan(k_stab_neighbor_op))
+                    best_neighStab = 0;
+                else 
+                    [~, lowest_err] = min(k_stab_neighbor_op); % get the index of the k that has the pair with the lowest avg std
+                    best_neighStab = k_stab_neighbor_i(lowest_err); % get the k val that has the highest stability with neighbors
+                end 
+
+            end
 
             %%% 20220404 LHT L376-384: K stability matrices for auditing
             %%% initialize matrix to store all k stability matrices
