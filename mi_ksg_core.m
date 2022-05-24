@@ -345,7 +345,8 @@ classdef mi_ksg_core < handle
             % stability
             notBad_Ks = find(weighted_k >= 1);
             
-            
+            %%% get MI and std for k neighbor eval and to return to core
+            %%% object
             if all(weighted_k == 0)
                 keyboard
             end
