@@ -418,7 +418,7 @@ classdef mi_ksg_core < handle
             %%% save the matrix
             obj.k_val_stab_mat = get_stabMat_kvals(obj, ks); 
             
-            % Return all values to core object
+            % Return all values to core object including best_neighStab
             obj.opt_k = {final_MIs, final_stds, weighted_k, ['k < 1: Bad; 1 <= k < 2: Not Bad (Ks have data fraction stability, but do not match each othebr, see matrix); k > 2: Good! Ks in this range match and have consistent ' ...
                                     'data fractions!'], k_stab};
         end
