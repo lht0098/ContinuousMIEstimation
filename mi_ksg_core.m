@@ -438,7 +438,8 @@ classdef mi_ksg_core < handle
                %%% get best_neighStab
                best_neighStab = obj.opt_k{1,6};
                
-               
+               %%% k selection
+
                if sum(valid_ks > 2) == 0
                    if sum(valid_ks > 1) == 0
                        %error('Error: No k values have stable data fractions. Please manually select a k')
