@@ -439,66 +439,25 @@ classdef mi_ksg_core < handle
                best_neighStab = obj.opt_k{1,6};
                
                %%% k selection
-
-               if sum(valid_ks > 2) == 0
-                   if sum(valid_ks > 1) == 0
-                       %error('Error: No k values have stable data fractions. Please manually select a k')
-                       warning('NO k values have stable data fractions. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
-                       best_weight = max(valid_ks);
-                       min_errIdx = find(errs == min(errs(valid_ks == best_weight)));
-                       % RC 20200310: FOR NOW, we just return an NaN value
-                       if isempty(min_errIdx)
-                           best_kIdx = 1;
-                           % Place holder to get past test
-                           MI = MIs(1);
-                           err = NaN;
-                       else
-                           best_kIdx = min(min_errIdx);
-                           MI = MIs(best_kIdx);
-                           err = errs(best_kIdx);
-                       end
-
-                   else
-                       % Choose k with maximum stability that minimizes stdev
-                       warning('Warning: K values are stable, but do not have consistent estimates. Selecting minimum k with maximum stability that minimizes error. Audit recommended.')
-                       best_weight = max(valid_ks(valid_ks > 1));
-                       min_errIdx = find(errs == min(errs(valid_ks == best_weight)));
-                       % RC 20200310: FOR NOW, we just return an NaN value
-                       if isempty(min_errIdx)
-                           best_kIdx = 1;
-                           % Place holder to get past test
-                           MI = MIs(1);
-                           err = NaN;
-                       else
-                           best_kIdx = min(min_errIdx);
-                           MI = MIs(best_kIdx);
-                           err = errs(best_kIdx);
-                       end
-
-                   end
-               else
-                   % Choose minimum k with maximum stability that minimizes stdev
-                   best_weight = max(valid_ks(valid_ks > 2));
+               if any(valid_ks >= 2) 
+                   disp('At least one k value has stable data fractions and is consistent with other ks')
+                   best_weight = max(valid_ks);
                    min_errIdx = find(errs == min(errs(valid_ks == best_weight)));
-                   % RC 20200310: FOR NOW, we just return an NaN value
-                   if isempty(min_errIdx)
-                       best_kIdx = 1;
-                       % Place holder to get past test. 
-                       MI = MIs(1);
-                       err = NaN;
-                   else
-                       best_kIdx = min(min_errIdx);
-                       MI = MIs(best_kIdx);
-                       err = errs(best_kIdx);
-                       
-                       k_vals = [obj.mi_data{:,4}];
-                       ks = unique(k_vals);
-                       if ks(best_kIdx) == 1 %& MI - err >= 0
-                           warning('Warning: K values are stable and consistent, but k = 1 was selected. Audit recommended')
-                       end
-                   end     
-
-               end
+                   best_kIdx = min(min_errIdx);
+                   MI = MIs(best_kIdx);
+                   err = errs(best_kIdx);
+               elseif any(valid_ks >= 1) 
+                   warning('Warning: At least one K value has stable data fractions, but MI is not consistent across stable K values. Selecting minimum k with maximum stability that minimizes error. Audit recommended.')
+                   best_kIdx = best_neighStab;
+                   MI = MIs(best_neighStab);
+                   err = errs(best_neighStab);
+               else    
+                   warning('The first 4 data fractions are not stable for any k. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
+                   best_kIdx = 0;
+                   % Place holder to get past test
+                   MI = NaN; 
+                   err = NaN;
+               end 
                
                % Output k value that was selected
                % 
