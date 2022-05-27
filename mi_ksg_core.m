@@ -455,10 +455,11 @@ classdef mi_ksg_core < handle
                    warning('The first 4 data fractions are not stable for any k. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
                    %%% if all k's do not have stable data fractions, select
                    %%% the k with the max stab and min err
-                   best_kIdx = 0;
-                   % Place holder to get past test
-                   MI = NaN; 
-                   err = NaN;
+                   best_weight = max(valid_ks);
+                   min_errIdx = find(errs == min(errs(valid_ks == best_weight)));
+                   best_kIdx = min(min_errIdx);
+                   MI = MIs(best_kIdx);
+                   err = errs(best_kIdx);
                end 
                
                % Output k value that was selected
