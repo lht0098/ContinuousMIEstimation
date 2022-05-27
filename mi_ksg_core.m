@@ -409,7 +409,7 @@ classdef mi_ksg_core < handle
                     [~, lowest_err] = min(k_stab_neighbor_op); % get the index of the k that has the pair with the lowest avg std
                     best_neighStab = k_stab_neighbor_i(lowest_err); % get the k val that has the highest stability with neighbors
                 end 
-
+            %%% set the best_neighStab to 0 if there is a k weight => 2
             end
 
             %%% 20220404 LHT L376-384: K stability matrices for auditing
