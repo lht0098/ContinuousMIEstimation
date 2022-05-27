@@ -243,6 +243,12 @@ classdef mi_ksg_core < handle
                    %GET VALUES FOR SANITY CHECK
                    % Find MI calcs with k-value
                     test_data_ixs = cell2mat(obj.mi_data(:,4)) == r.k;
+                    if length(test_data_ixs) == 0
+                        r.mi = 0;
+                        r.err = 0;
+                        r.k = 0;
+                        return;
+                    end
 
                     % calculate estimated error
                     test_listSplitSizes = cell2mat(obj.mi_data(test_data_ixs,3));
