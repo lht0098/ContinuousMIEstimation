@@ -372,9 +372,6 @@ classdef mi_ksg_core < handle
                 % Get new weights for ks according to k stability matrix
                 weighted_k = weighted_k + k_stability_weights;
                 
-            else
-                k_stab = [];
-                
             end
 
             %%% k neighbor stability evaluation
