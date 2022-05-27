@@ -435,7 +435,7 @@ classdef mi_ksg_core < handle
                MIs = obj.opt_k{1,1};
                errs = obj.opt_k{1,2};
                %%% get best_neighStab
-               best_neighStab = obj.opt_k{1,6};
+               best_neighStab = obj.opt_k{1,5};
 
                %%% k evaluation
                best_weight = max(valid_ks);
