@@ -410,6 +410,8 @@ classdef mi_ksg_core < handle
                     best_neighStab = k_stab_neighbor_i(lowest_err); % get the k val that has the highest stability with neighbors
                 end 
             %%% set the best_neighStab to 0 if there is a k weight => 2
+            else
+                best_neighStab = 0;
             end
 
             %%% 20220404 LHT L376-384: K stability matrices for auditing
