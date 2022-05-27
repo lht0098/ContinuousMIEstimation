@@ -435,7 +435,7 @@ classdef mi_ksg_core < handle
                MIs = obj.opt_k{1,1};
                errs = obj.opt_k{1,2};
                %%% get best_neighStab
-               best_neighStab = obj.opt_k{1,5};
+               best_neigh = obj.opt_k{1,5};
 
                %%% k evaluation
                best_weight = max(valid_ks);
@@ -449,10 +449,10 @@ classdef mi_ksg_core < handle
                    disp('At least one k value has stable data fractions and is consistent with other ks')
                elseif any(valid_ks >= 1)
                    warning('Warning: At least one K value has stable data fractions, but MI is not consistent across stable K values. Selecting minimum k with maximum stability that minimizes error. Audit recommended.')
-                   if best_neighStab ~= 0
-                       best_kIdx = best_neighStab;
-                       MI = MIs(best_neighStab);
-                       err = errs(best_neighStab);
+                   if best_neigh ~= 0
+                       best_kIdx = best_neigh;
+                       MI = MIs(best_neigh);
+                       err = errs(best_neigh);
                    end 
                else    
                    warning('The first 4 data fractions are not stable for any k. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
