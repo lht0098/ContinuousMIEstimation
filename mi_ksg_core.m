@@ -437,29 +437,28 @@ classdef mi_ksg_core < handle
                errs = obj.opt_k{1,2};
                %%% get best_neighStab
                best_neighStab = obj.opt_k{1,6};
-               
+
+               %%% k evaluation
+               best_weight = max(valid_ks);
+               min_errIdx = find(errs == min(errs(valid_ks == best_weight)));
+               best_kIdx = min(min_errIdx);
+               MI = MIs(best_kIdx);
+               err = errs(best_kIdx);
+
                %%% k selection
                if any(valid_ks >= 2) 
                    disp('At least one k value has stable data fractions and is consistent with other ks')
-                   best_weight = max(valid_ks);
-                   min_errIdx = find(errs == min(errs(valid_ks == best_weight)));
-                   best_kIdx = min(min_errIdx);
-                   MI = MIs(best_kIdx);
-                   err = errs(best_kIdx);
-               elseif any(valid_ks >= 1) 
+               elseif any(valid_ks >= 1)
                    warning('Warning: At least one K value has stable data fractions, but MI is not consistent across stable K values. Selecting minimum k with maximum stability that minimizes error. Audit recommended.')
-                   best_kIdx = best_neighStab;
-                   MI = MIs(best_neighStab);
-                   err = errs(best_neighStab);
+                   if best_neighStab ~= 0
+                       best_kIdx = best_neighStab;
+                       MI = MIs(best_neighStab);
+                       err = errs(best_neighStab);
+                   end 
                else    
                    warning('The first 4 data fractions are not stable for any k. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
                    %%% if all k's do not have stable data fractions, select
                    %%% the k with the max stab and min err
-                   best_weight = max(valid_ks);
-                   min_errIdx = find(errs == min(errs(valid_ks == best_weight)));
-                   best_kIdx = min(min_errIdx);
-                   MI = MIs(best_kIdx);
-                   err = errs(best_kIdx);
                end 
                
                % Output k value that was selected
