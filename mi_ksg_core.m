@@ -453,6 +453,8 @@ classdef mi_ksg_core < handle
                    err = errs(best_neighStab);
                else    
                    warning('The first 4 data fractions are not stable for any k. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
+                   %%% if all k's do not have stable data fractions, select
+                   %%% the k with the max stab and min err
                    best_kIdx = 0;
                    % Place holder to get past test
                    MI = NaN; 
