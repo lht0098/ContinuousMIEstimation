@@ -192,6 +192,7 @@ classdef mi_analysis < handle
         function getMIs(obj)
             for iCores = 1:size(obj.arrMIcore,1)
                 core = obj.arrMIcore{iCores,1};
+                disp(['MI core index: ' num2str(iCores)]);
 
                 % Set the warning message to empty
                 lastwarn('')
