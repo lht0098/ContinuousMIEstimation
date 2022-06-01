@@ -232,6 +232,7 @@ classdef mi_ksg_core < handle
                 return
 
             else
+                disp('Analyzing data');
                  % Find MIs differently depending on value of k
                 if k == 0
                     % Find MI for optimized k.
@@ -244,11 +245,13 @@ classdef mi_ksg_core < handle
                    % Find MI calcs with k-value
                     test_data_ixs = cell2mat(obj.mi_data(:,4)) == r.k;
                     if length(test_data_ixs) == 0
-                        r.mi = 0;
-                        r.err = 0;
-                        r.k = 0;
+                        r.mi = NaN;
+                        r.err = NaN;
+                        r.k = NaN;
                         return;
                     end
+
+                    if isnan(r.mi) | r.mi == 0; return; end      
 
                     % calculate estimated error
                     test_listSplitSizes = cell2mat(obj.mi_data(test_data_ixs,3));
@@ -275,6 +278,10 @@ classdef mi_ksg_core < handle
 
                     test_MI = test_MIs(1);
                     test_err = test_variancePredicted.^0.5;
+                    r.mi
+                    test_MI
+                    r.err
+                    test_err
 
                     % ACTUAL SANITY CHECK
                     if ~isequaln(r.mi,test_MI) | ~isequaln(r.err, test_err) 
@@ -330,22 +337,23 @@ classdef mi_ksg_core < handle
             k_vals = [obj.mi_data{:,4}];
             ks = unique(k_vals);
             weighted_k = zeros(size(ks)); 
+
+            % 20220404 LHT L331-L338: 
+            % initialize matrix to store all data fraction 
+            % stability matrices
+            num_dataFracs = data(find(data(:,4) == 1),3);
+            obj.data_frac_stab_mat = zeros(size(num_dataFracs,1), size(num_dataFracs,1), size(ks,2));
              
             for ik = 1:length(ks)
                 % Find data fraction stability matrix for each k
                 dataFrac_stab = get_stabMat_dataFrac(obj,ks(ik));
-                % 20220404 LHT L331-L338: 
-                % initialize matrix to store all data fraction 
-                % stability matrices
-                if ik == 1
-                    obj.data_frac_stab_mat = zeros(size(dataFrac_stab,1), size(dataFrac_stab,2), size(ks,2));
-                end 
+
                 % put the matrix in the next page
                 obj.data_frac_stab_mat(:,:,ks(ik)) = dataFrac_stab;
                 
                 % Get stability metric value for each k
                 weighted_k(ik) = test_dataFrac_stab(obj, dataFrac_stab);               
-            end                      
+            end  
 
             % Identify k values that satisfy the minimum criteria for
             % stability
@@ -370,6 +378,12 @@ classdef mi_ksg_core < handle
                 % Find matrix to describe stability across good k values
                 %%% initiate array of k stab values for all ks  
                 k_stab = get_stabMat_kvals(obj, ks);
+
+                %%% 20220404 LHT L376-384: K stability matrices for auditing
+                %%% initialize matrix to store all k stability matrices
+                obj.k_val_stab_mat = zeros(size(ks,2), size(ks,2));
+                %%% save the matrix
+                obj.k_val_stab_mat = k_stab;
 
                 % Get stability metric value for k stability
                 %%% initiate array of k stability weights 
@@ -416,12 +430,6 @@ classdef mi_ksg_core < handle
             else
                 best_neighStab = 0;
             end
-
-            %%% 20220404 LHT L376-384: K stability matrices for auditing
-            %%% initialize matrix to store all k stability matrices
-            obj.k_val_stab_mat = zeros(size(ks,2), size(ks,2));
-            %%% save the matrix
-            obj.k_val_stab_mat = get_stabMat_kvals(obj, ks); 
             
             % Return all values to core object including best_neighStab
             obj.opt_k = {final_MIs, final_stds, weighted_k, ['k < 1: Bad; 1 <= k < 2: Not Bad (Ks have data fraction stability, but do not match each othebr, see matrix); k > 2: Good! Ks in this range match and have consistent ' ...
@@ -455,13 +463,16 @@ classdef mi_ksg_core < handle
                    disp('At least one k value has stable data fractions and is consistent with other ks')
                elseif any(valid_ks >= 1) && best_neigh == 0
                    warning('Warning: At least one K value has stable data fractions, but MI is not consistent across stable K values. Selecting minimum k with maximum stability that minimizes error. Audit recommended.')
-               elseif any(valid_ks >= 1) && best_neigh ~= 0    
-                   best_neigh ~= 0;
+                   MI = NaN;
+                   err = NaN; 
+               elseif any(valid_ks >= 1) && best_neigh > 0    
                    best_kIdx = best_neigh;
                    MI = MIs(best_neigh);
                    err = errs(best_neigh);
                else    
                    warning('The first 4 data fractions are not stable for any k. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
+                   MI = NaN;
+                   err = NaN;
                    %%% if all k's do not have stable data fractions, select
                    %%% the k with the max stab and min err
                end 
