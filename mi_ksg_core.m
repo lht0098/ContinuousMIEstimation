@@ -453,13 +453,13 @@ classdef mi_ksg_core < handle
                %%% k selection
                if any(valid_ks >= 2) 
                    disp('At least one k value has stable data fractions and is consistent with other ks')
-               elseif any(valid_ks >= 1)
+               elseif any(valid_ks >= 1) && best_neigh == 0
                    warning('Warning: At least one K value has stable data fractions, but MI is not consistent across stable K values. Selecting minimum k with maximum stability that minimizes error. Audit recommended.')
-                   if best_neigh ~= 0
-                       best_kIdx = best_neigh;
-                       MI = MIs(best_neigh);
-                       err = errs(best_neigh);
-                   end 
+               elseif any(valid_ks >= 1) && best_neigh ~= 0    
+                   best_neigh ~= 0;
+                   best_kIdx = best_neigh;
+                   MI = MIs(best_neigh);
+                   err = errs(best_neigh);
                else    
                    warning('The first 4 data fractions are not stable for any k. Please manually select a k. FOR NOW- selecting minimum k with max stability that minimizes error')
                    %%% if all k's do not have stable data fractions, select
