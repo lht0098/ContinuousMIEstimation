@@ -100,16 +100,24 @@ classdef mi_ksg_viz < handle
                     % RC 20191213: We should come back and set specific bin widths here.
                     % The only issue we may run into is
                     x = coreObj.x;
-                    figure()
+
+                    % 20220609 LHT: don't display figure
+                    % figure()
+                    figure('visible', 'off')
+
                     histogram(x)
                     hold on
                     xlabel('X Value (binned)')
                     ylabel('N Cycles')
                     title('Histogram for X')
-                    
+
                     % Histogram for y
                     y = coreObj.y;
-                    figure()
+
+                    % 20220609 LHT: don't display figure
+                    % figure()
+                    figure('visible', 'off')
+                    
                     histogram(y)
                     hold on
                     xlabel('Y Value (binned)')
@@ -126,15 +134,23 @@ classdef mi_ksg_viz < handle
                         [~, scorey, latenty] = pca(y); 
                         
                         % Plot the first components against each other 
-                        figure()
+
+                        % 20220609 LHT: don't display figure
+                        % figure()
+                        figure('visible', 'off')
+                        
                         scatter(scorex(:,1), scorey(:,1), 'x');
                         axis equal; 
                         xlabel('1st X Principle Component')
                         ylabel('1st Y Principle Component')
                         title('PCA Joint Plot')
                         
-                        % Plot variability in x components 
-                        figure()
+                        % Plot variability in x components
+
+                        % 20220609 LHT: don't display figure
+                        % figure()
+                        figure('visible', 'off')
+                        
                         cumsumx = sum(latentx);
                         perVarx = latentx / cumsumx;
                         bar(perVarx)
@@ -142,8 +158,12 @@ classdef mi_ksg_viz < handle
                         ylabel('Percent Variability Explained')
                         title('Scree Plot for X')
                         
-                        % Plot variability in y components 
-                        figure()
+                        % Plot variability in y components
+
+                        % 20220609 LHT: don't display figure, save it
+                        % figure()
+                        figure('visible', 'off')
+
                         cumsumy = sum(latenty);
                         perVary = latenty / cumsumy;
                         bar(perVary)
@@ -166,7 +186,11 @@ classdef mi_ksg_viz < handle
                                 N = log(N);
 
                                 % Plot scattered data:
-                                figure()
+
+                                % 20220609 LHT: don't display figure
+                                % figure()
+                                figure('visible', 'off')
+
                                 scatter(x_plot, y_plot, 'x');
                                 axis equal;
                                 set(gca, 'XLim', pts([1 end]), 'YLim', pts([1 end]));
@@ -175,7 +199,11 @@ classdef mi_ksg_viz < handle
                                 title('P(X,Y) Discrete Joint Distribution')
 
                                 % Plot heatmap:
-                                figure()
+
+                                % 20220609 LHT: don't display figure
+                                % figure()
+                                figure('visible', 'off')
+
                                 imagesc(pts, pts, N);
                                 axis equal;
                                 set(gca, 'XLim', pts([1 end]), 'YLim', pts([1 end]), 'YDir', 'normal');
@@ -209,7 +237,11 @@ classdef mi_ksg_viz < handle
                                 end
 
                                 % Make figure
-                                figure()
+
+                                % 20220609 LHT: don't display figure
+                                % figure()
+                                figure('visible', 'off')
+
                                 plot(x_plot, y_plot, 'x')
                                 hold on
                                 xlabel(x_L)
@@ -222,7 +254,11 @@ classdef mi_ksg_viz < handle
                             % The assumption is that both distributions are continuous if neither of the above if statements are true.
                             try
                                 % Make figure
-                                figure()
+
+                                % 20220609 LHT: don't display figure
+                                % figure()
+                                figure('visible', 'off')
+
                                 plot(x,y, 'x')
                                 hold on
                                 xlabel('Continuous Variable: X')
