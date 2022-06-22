@@ -7,8 +7,15 @@ classdef mi_data_pressure < mi_data_behavior
    properties
 %        omitOutliers % boolean to indicate whether to omit cycles with outlier lengths from analysis
 %        outliers
+
+        % move these parameters into an info struct??
        method       %   method for determining pressure cycles
        threshold    %   threshold value if using method == threshold
+       
+       loCutoff     %   low cutoff value for bandpass filtering behavior
+       hiCutoff     %   high cutoff value for bandpass filtering behavior
+
+       calibration  %   struct of calibration data
 
    end
 
@@ -20,6 +27,12 @@ classdef mi_data_pressure < mi_data_behavior
 
             obj.method = '';
             obj.threshold = nan;
+            obj.loCutoff = nan;
+            obj.hiCutoff = nan;
+            obj.calibration = struct();
+            obj.calibration.slope = nan;
+            obj.calibration.first_file_mean = nan;
+            obj.calibration.pressure_offset = nan;
        end
        
        %function set_data_files(obj, arrDataFiles, varargin)
@@ -37,8 +50,8 @@ classdef mi_data_pressure < mi_data_behavior
            default_files = {};
            default_ext = '.csv';
 
+           p = inputParser;
            if nargin > 1
-               p = inputParser;
                
                validate_folder = @(x) assert(ischar(x) && isfolder(x), 'Parameter folder must be a folder name as a string');
                addParameter(p, 'folder', default_folder, validate_folder);
@@ -49,16 +62,36 @@ classdef mi_data_pressure < mi_data_behavior
                validate_ext = @(x) assert(ischar(x) && (strfind(x, '.') == 1), 'Parameter ext must be a string that begins with a period');
                addParameter(p, 'ext', default_ext, validate_ext);
     
-               p.parse(varargin{:});
+               p.parse(varargin{:});                
+           end
 
+           % Set parameter values in priority:
+           % 1. Function value
+           % 2. Object value
+           % 3. Default value
+
+           if any(strcmp(p.Parameters,'files'))
                fnames = p.Results.files;
-               fldr = p.Results.folder;
-               fext = p.Results.ext;
+           elseif length(obj.arrFiles) > 0
+               fnames = obj.arrFiles;
            else
                fnames = default_files;
+           end
+
+           if any(strcmp(p.Parameters, 'folder'))
+               fldr = p.Results.folder;
+           elseif length(obj.strFldr) > 0
+               fldr = obj.strFldr;
+           else
                fldr = default_fldr;
+           end
+
+           if any(strcmp(p.Parameters, 'ext'))
+               fext = p.Results.ext;
+           elseif length(obj.strExt) > 0
+               fext = obj.strExt;
+           else
                fext = default_ext;
-                
            end
 
            % if no folder and no files specified, user needs to choose folder for data
@@ -132,6 +165,54 @@ classdef mi_data_pressure < mi_data_behavior
             if v>0; disp('COMPLETE: Data files set!'); end
        end
        
+       function set_calibration(obj, varargin)
+           % Set values for calibration data
+
+           v = obj.verbose;
+
+           default_slope = nan;
+           default_mean_first_file = nan;
+           default_offset = nan;
+
+           p = inputParser;
+           if nargin > 1
+               
+               validate_slope = @(x) assert(isnumeric(x), 'slope must be numeric');
+               addParameter(p, 'slope', default_slope, validate_slope);
+    
+               validate_mean_first_file = @(x) assert(isnumeric(x), 'first_file_mean must be numeric');
+               addParameter(p, 'first_file_mean', default_mean_first_file, validate_mean_first_file);
+
+               validate_offset = @(x) assert(isnumeric(x), 'pressure_offset must be numeric');
+               addParameter(p, 'pressure_offset', default_offset, validate_offset);
+    
+               p.parse(varargin{:});                
+           end
+
+           % Set parameter values in priority:
+           % 1. Function value
+           % 2. Object value
+           % 3. Default value
+
+           if any(strcmp(p.Parameters,'slope'))
+               obj.calibration.slope = p.Results.slope;
+           else
+               obj.calibration.slope = default_slope;
+           end
+
+           if any(strcmp(p.Parameters,'first_file_mean'))
+               obj.calibration.first_file_mean = p.Results.first_file_mean;
+           else
+               obj.calibration.first_file_mean = default_mean_first_file;
+           end
+
+           if any(strcmp(p.Parameters,'pressure_offset'))
+               obj.calibration.pressure_offset = p.Results.pressure_offset;
+           else
+               obj.calibration.pressure_offset = default_offset;
+           end
+       end
+
 %        function r = outlierScrub(obj)
 %            
 %            % Find cycle intervals
@@ -169,53 +250,97 @@ classdef mi_data_pressure < mi_data_behavior
             default_method = 'hilbert';
             default_threshold = 0;
 
+            default_loCutoff = 1;
+            default_hiCutoff = 50;
+
+
+            p = inputParser;
+
             if nargin > 1
-                p = inputParser;
 
                 validate_cycle_times = @(x) assert(ismatrix(x), 'Parameter cycleTimes must be an array.');
                 addParameter(p, 'cycleTimes', default_ext, validate_ext);
     
                 validate_method = @(x) assert(ischar(x) && (strcmp(x,'hilbert') | strcmp(x,'threshold')), 'Parameter method must be either hilbert or threshold.');
-                addParameter(p, 'mtehod', default_method, validate_method);
+                addParameter(p, 'method', default_method, validate_method);
 
                 validate_threshold = @(x) assert(isnumeric(x), 'Parameter threshold must be a number.');
                 addParameter(p, 'threshold', default_threshold, validate_threshold);
 
+                validate_loCutoff = @(x) assert(isnumeric(x), 'Parameter loCutoff must be a number.');
+                addParameter(p, 'loCutoff', default_loCutoff, validate_loCutoff);
+
+                validate_hiCutoff = @(x) assert(isnumeric(x), 'Parameter hiCutoff must be a number.');
+                addParameter(p, 'hiCutoff', default_hiCutoff, validate_hiCutoff);
+
                 p.parse(varargin{:});
+            end
 
+            % set parameters with priority:
+            % 1. function
+            % 2. from object
+            % 3. default value
+
+            if any(strcmp(p.Parameters, 'cycleTimes'))
                 cycleTimes = p.Results.cycleTimes;
-                method = p.Results.method;
-                threshold = p.Results.threshold;
-            else
-                if any(strcmp(fields(obj.data), 'cycleTimes'))
-                    if length(obj.data.cycleTimes) < 1
-                        cycleTimes = default_cycleTimes;
-                    else
-                        cycleTimes = obj.data.cycleTimes;
-                    end
-                else
+            elseif any(strcmp(fields(obj.data), 'cycleTimes'))
+                if length(obj.data.cycleTimes) < 1
                     cycleTimes = default_cycleTimes;
-                end
-
-                if length(obj.method) < 1
-                    method = default_method;
                 else
-                    method = obj.method;
+                    cycleTimes = obj.data.cycleTimes;
                 end
+            else
+                cycleTimes = default_cycleTimes;
+            end
 
-                if isnan(obj.threshold)
-                    threshold = default_threshold;
-                else
-                    threshold = obj.threshold;
-                end
+            if any(strcmp(p.Parameters, 'method'))
+                method = p.Results.method;
+            elseif length(obj.method) > 0
+                method = obj.method;
+            else
+                method = default_method;
+            end
+
+            if any(strcmp(p.Parameters, 'threshold'))
+                threshold = p.Results.threshold;
+            elseif ~isnan(obj.threshold)
+                threshold = obj.threshold;
+            else
+                threshold = default_threshold;
+            end
+
+            if any(strcmp(p.Parameters, 'loCutoff'))
+                loCutoff = p.Results.loCutoff;
+            elseif ~isnan(obj.loCutoff)
+                loCutoff = obj.loCutoff;
+            else
+                loCutoff = default_loCutoff;
+            end
+
+            if any(strcmp(p.Parameters, 'hiCutoff'))
+                hiCutoff = p.Results.hiCutoff;
+            elseif ~isnan(obj.hiCutoff)
+                hiCutoff = obj.hiCutoff;
+            else
+                hiCutoff = default_hiCutoff;
             end
             
+            obj.method = method;
+            obj.threshold = threshold;
+            obj.loCutoff = loCutoff;
+            obj.hiCutoff = hiCutoff;
+
             % check for consistency of parameters
             assert(size(cycleTimes,2) ~= 2, 'Parameter cycleTimes must have only 2 columns: [cycle onset, cycle offset]');
             assert(strcmp(method,'hilbert') || strcmp(method,'threshold'), 'Parameter method must be either hilbert or threshold');
             if strcmp(method,'threshold'); assert(~isnan(threshold), 'Parameter threshold must be numeric.'); end
 
-            
+            if v>1; disp('Checking calibration settings...'); end
+            if (isnan(obj.calibration.slope) || isnan(obj.calibration.first_file_mean) || isnan(obj.calibration.pressure_offset))
+                error('Calibration data must be set before building behavior!');
+            end
+
+
             if v>1; disp([newline '--> Building behavioral data...']); end
             
 
@@ -230,13 +355,19 @@ classdef mi_data_pressure < mi_data_behavior
             dat_pressure = [];
             dat_ts = [];
 
+            Fs = 0;
+
+            if length(obj.arrFiles) == 0;
+                error('Gotta go back and set data files! Use set_data_files().')
+            end
+
             for i=1:length(obj.arrFiles)
                 if v > 1
                     disp('===== ===== ===== ===== =====');
                     disp(['Processing file ' num2str(i) ' of ' num2str(length(obj.arrFiles))]);
                     disp(['File: ' obj.strFldr '\' obj.arrFiles{i}]);
                 end
-                [pressure_ts, pressure_wav] = read_Intan_RHD2000_nongui_adc(fullfile(obj.strFldr, obj.arrFiles{i}), v);
+                [pressure_ts, pressure_wav, frequency_parameters] = read_Intan_RHD2000_nongui_adc(fullfile(obj.strFldr, obj.arrFiles{i}), v);
 
                 
                 if v>2
@@ -247,6 +378,11 @@ classdef mi_data_pressure < mi_data_behavior
                 dat_pressure(end+1:end+length(pressure_ts)) = pressure_wav;
                 dat_ts(end+1:end+length(pressure_ts)) = pressure_ts;
 
+                if Fs > 0
+                    assert(frequency_parameters.board_adc_sample_rate == Fs, 'Inconsistent sampling resolution for behavioral data! ABORT!!');
+                else
+                    Fs = frequency_parameters.board_adc_sample_rate;
+                end
                 % Filter Pressure Waves
 %                 filterData = obj.filterBehavior(pressure_wav, obj.Fs, filterFreq); % This will change once we update filterBehavior func
 %                 if v>3; disp('--> --> Filtering data...');end
@@ -283,6 +419,17 @@ classdef mi_data_pressure < mi_data_behavior
             % Check that number of stored cycles matches the final value of the offset. 
 %             if ~any(behavOffset == size(find(~cellfun('isempty',obj.rawBehav)))); error('Total number of stored cycles does not match the final offset of cycle index'); end
             
+            obj.data.dat_pressure = dat_pressure;
+
+            if v>0; disp(['Applyiung calibration...']); end
+            %0.249174*slope*((pressure_wav/mean(pressure_wav))*first_file_mean-pressure_offset);
+            cal = obj.calibration;
+            cal_pressure = 0.249174*cal.slope*((dat_pressure/mean(dat_pressure))*cal.first_file_mean - cal.pressure_offset);
+            obj.data.cal_pressure = cal_pressure;
+
+
+            if v>0; disp(['Applying bandpass(' num2str(loCutoff) ', ' num2str(hiCutoff) ') filter to behavior data...']); end
+            obj.data.filt_pressure = bandpass_filtfilt(cal_pressure, Fs, loCutoff, hiCutoff, 'hanningfir');
 
 
             if v>0; disp('COMPLETE: Behavioral data loaded!'); end
