@@ -358,7 +358,7 @@ classdef mi_data_pressure < mi_data_behavior
             Fs = 0;
 
             if length(obj.arrFiles) == 0;
-                error('Gotta go back and set data files! Use set_data_files().')
+                error('Gotta go back and set data files! Use set_data_files().');
             end
 
             for i=1:length(obj.arrFiles)
@@ -420,6 +420,7 @@ classdef mi_data_pressure < mi_data_behavior
 %             if ~any(behavOffset == size(find(~cellfun('isempty',obj.rawBehav)))); error('Total number of stored cycles does not match the final offset of cycle index'); end
             
             obj.data.dat_pressure = dat_pressure;
+            obj.Fs = Fs;
 
             if v>0; disp(['Applyiung calibration...']); end
             %0.249174*slope*((pressure_wav/mean(pressure_wav))*first_file_mean-pressure_offset);
@@ -435,9 +436,54 @@ classdef mi_data_pressure < mi_data_behavior
             if v>0; disp('COMPLETE: Behavioral data loaded!'); end
        end
        
+       function process_behavior(obj)
+           % process pressure data using cycleTimes
+
+           v = obj.verbose;
+
+           wav_pressure = {};
+
+           Fs = obj.Fs;
+
+           % need to parameterize hilbert cycle threshold for duration
+           h_cycle_th = 0.2;
+
+           h_transform = hilbert(obj.data.filt_pressure);
+           phase_data = atan2(imag(h_transform), real(h_transform));
+            
+           h_cycle_starts = find(diff(sign(phase_data+1e-6)) == -2);
+           h_cycle_ends = find(diff(sign(phase_data+1e-6)) == 2);
+
+           t_data = (1:length(obj.data.dat_pressure))/obj.Fs;
+           h_durs = diff([t_data(h_cycle_starts); t_data(h_cycle_ends)]);
+           good_h_cycles_ixs = find(h_durs > h_cycle_th);
+           h_good_cycle_starts = h_cycle_starts(good_h_cycles_ixs);
+           h_good_cycle_ends = h_cycle_ends(good_h_cycles_ixs);
+
+           cycleTimes = t_data([h_good_cycle_starts(1:end-1)' h_good_cycle_starts(2:end)']);
+           obj.data.cycleTimes = cycleTimes;
+
+%            cycleTimes = obj.data.cycleTimes.data;
+           for c = 1:size(cycleTimes,1)
+                ts = cycleTimes(c,:);
+                if floor(Fs*ts(1)) > length(obj.data.filt_pressure) || ceil(Fs*ts(2)) > length(obj.data.filt_pressure); continue; end
+
+                wav_pressure{end+1} = [obj.data.filt_pressure(floor(Fs*ts(1)):ceil(Fs*ts(2)))];
+           end
+
+           if length(wav_pressure) < size(cycleTimes,1)
+               warning('Unable to extract all pressure waveforms!');
+           end
+
+           if v>0; disp(['Extracted ' num2str(length(wav_pressure)) ' of ' num2str(size(cycleTimes,1)) ' cycle waveforms']); end
+
+           obj.data.wav_pressure = wav_pressure;
+       end
        
        function [filterData] = filterBehavior(obj, behavior, cycleFreq, filterFreq)
            
+            v = obj.verbose;
+
             if v>1; disp([newline '--> Filtering behavioral data...']); end 
            
             % This function prepares the raw behavioral data for analysis
@@ -516,7 +562,7 @@ classdef mi_data_pressure < mi_data_behavior
                 case('time')
                     if v>2; disp([newline '--> --> Formatting behavior: time']); end
                     % Find the lengths of the cycles in samples
-                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), obj.rawBehav, 'UniformOutput', false));
+                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), obj.data.wav_pressure, 'UniformOutput', false));
 
                     % Find the sample associated with the start time for each
                     % cycle in ms
@@ -545,7 +591,7 @@ classdef mi_data_pressure < mi_data_behavior
                     for cycle_ix = 1:nCycles
                        % Document all of the data points for the window of
                        % interest
-                       dat = obj.rawBehav{cycle_ix};
+                       dat = obj.data.wav_pressure{cycle_ix};
                        if length(dat) >= stop_samples
                            cycle_data = dat(start_samples:stop_samples);
                            % Resample to get only the desired number of points
@@ -564,7 +610,7 @@ classdef mi_data_pressure < mi_data_behavior
                 case('phase')
                     if v>2; disp([newline '--> --> Formatting behavior: phase']); end
                     % Find the lengths of the cycles in samples
-                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), obj.rawBehav, 'UniformOutput', false));
+                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), obj.data.wav_pressure, 'UniformOutput', false));
 
                     % Find the sample associated with the start phase for each
                     % cycle
@@ -593,7 +639,7 @@ classdef mi_data_pressure < mi_data_behavior
                         % Document all of the data points for the window of
                         % interest
                         if stop_samples(cycle_ix) > start_samples(cycle_ix)
-                            dat = obj.rawBehav{cycle_ix};
+                            dat = obj.data.wav_pressure{cycle_ix};
                             cycle_data = dat(start_samples(cycle_ix):stop_samples(cycle_ix));
 
                             newSamples = round(linspace(1,length(cycle_data),nSamp));
