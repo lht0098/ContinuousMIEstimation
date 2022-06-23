@@ -113,7 +113,7 @@ classdef mi_data < handle
                 disp(['mi_data(' obj.ID ') with fields:']);
                 fields(obj.data)
             end
-            if v>2
+            if v>4
                 fs = fields(obj.data);
                 for i=1:length(fs)
                     disp(obj.data.(fs{i}))
