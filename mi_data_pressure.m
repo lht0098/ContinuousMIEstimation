@@ -567,6 +567,7 @@ classdef mi_data_pressure < mi_data_behavior
                     % Find the sample associated with the start time for each
                     % cycle in ms
                     start_samples = ceil(start*obj.Fs/1000.);
+                    if start_samples == 0; start_samples = 1; end
 
                     % Find the number of samples that encompases the window of
                     % interest for the cycles. 
@@ -623,6 +624,10 @@ classdef mi_data_pressure < mi_data_behavior
                     % Find the stop sample of the window of interest for each
                     % cycle
                     stop_samples = start_samples + windowOfInterest_samples;
+
+                    % including AFTER stop_samples calculation to avoid
+                    % indices out of bounds
+                    start_samples(start_samples == 0) = 1;
 
                     if v>3
                         disp(['Cycle Start Phase: ' num2str(start) ' rad']);
