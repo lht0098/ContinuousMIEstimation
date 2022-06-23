@@ -4,6 +4,7 @@ classdef mi_data_behavior < mi_data
         
         arrFiles % list of files with raw behavioral data
         strFldr % path to where the data files are saved
+        strExt % extension of data file
         
         cycle_select
     end

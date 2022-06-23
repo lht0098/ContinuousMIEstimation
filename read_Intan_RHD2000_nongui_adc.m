@@ -1,4 +1,4 @@
-function [t_amplifier, board_adc_data] = read_Intan_RHD2000_nongui_adc(intan_fname, verbose)
+function [t_amplifier, board_adc_data, frequency_parameters] = read_Intan_RHD2000_nongui_adc(intan_fname, verbose)
 
 % read_Intan_RHD2000_file
 %
