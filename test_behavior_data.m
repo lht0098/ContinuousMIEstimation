@@ -26,7 +26,7 @@ b.process_behavior();
 
 %% Time | raw
 start = 1;
-dur= 300;
+dur= 200;
 samps = 100;
 
 x = b.get_behavior('time', 'raw', start, dur, samps);
