@@ -11,6 +11,9 @@ classdef calc_count_behav < mi_analysis
         dur
         nSamp
         nPC
+
+        discard_omittedData = 0; %RC - not relevant for count_count subclass, but necessary for mi_analysis to run. 
+
     end
     
     methods
@@ -35,7 +38,7 @@ classdef calc_count_behav < mi_analysis
             % Set parameters
             default_b_timeBase = 'phase';
             valid_b_timeBases = {'time', 'phase'};
-            validate_b_timeBase = @(x) assert(ischar(x) && ismember(x, valid_timeBases), 'b_timeBase must be: time, phase');
+            validate_b_timeBase = @(x) assert(ischar(x) && ismember(x, valid_b_timeBases), 'b_timeBase must be: time, phase');
             p.addParameter('b_timeBase', default_b_timeBase, validate_b_timeBase); 
 
             default_feature = 'residual';
@@ -52,11 +55,11 @@ classdef calc_count_behav < mi_analysis
             p.addParameter('dur', default_dur, validate_dur); 
 
             default_nSamp = 11;
-            validate_nSamp = @(x) assert(isinteger(x), 'nSamp must be an integer');
+            validate_nSamp = @(x) assert(isnumeric(x) && mod(x,1) == 0, 'nSamp must be an integer');
             p.addParameter('nSamp', default_nSamp, validate_nSamp);
 
             default_nPC = 3;
-            validate_nPC = @(x) assert(isinteger(x), 'nPC must be an integer');
+            validate_nPC = @(x) assert(isnumeric(x) && mod(x,1) == 0, 'nPC must be an integer');
             p.addParameter('nPC', default_nPC, validate_nPC);
 
             
