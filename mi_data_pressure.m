@@ -419,18 +419,19 @@ classdef mi_data_pressure < mi_data_behavior
             % Check that number of stored cycles matches the final value of the offset. 
 %             if ~any(behavOffset == size(find(~cellfun('isempty',obj.rawBehav)))); error('Total number of stored cycles does not match the final offset of cycle index'); end
             
-            obj.data.dat_pressure = dat_pressure;
+            add_data(obj, dat_pressure, '', Fs, 'dat_pressure');
+            add_data(obj, dat_ts, '', Fs, 'dat_ts');
             obj.Fs = Fs;
 
             if v>0; disp(['Applyiung calibration...']); end
             %0.249174*slope*((pressure_wav/mean(pressure_wav))*first_file_mean-pressure_offset);
             cal = obj.calibration;
             cal_pressure = 0.249174*cal.slope*((dat_pressure/mean(dat_pressure))*cal.first_file_mean - cal.pressure_offset);
-            obj.data.cal_pressure = cal_pressure;
+            add_data(obj, cal_pressure, '', Fs, 'cal_pressure');
 
 
             if v>0; disp(['Applying bandpass(' num2str(loCutoff) ', ' num2str(hiCutoff) ') filter to behavior data...']); end
-            obj.data.filt_pressure = bandpass_filtfilt(cal_pressure, Fs, loCutoff, hiCutoff, 'hanningfir');
+            add_data(obj, bandpass_filtfilt(cal_pressure, Fs, loCutoff, hiCutoff, 'hanningfir'), '', Fs, 'filt_pressure');
 
 
             if v>0; disp('COMPLETE: Behavioral data loaded!'); end
@@ -445,30 +446,87 @@ classdef mi_data_pressure < mi_data_behavior
 
            Fs = obj.Fs;
 
-           % need to parameterize hilbert cycle threshold for duration
-           h_cycle_th = 0.2;
+           assert(isfield(obj.data, 'filt_pressure'), 'Run build_behavior before running process_behavior');
 
-           h_transform = hilbert(obj.data.filt_pressure);
-           phase_data = atan2(imag(h_transform), real(h_transform));
-            
-           h_cycle_starts = find(diff(sign(phase_data+1e-6)) == -2);
-           h_cycle_ends = find(diff(sign(phase_data+1e-6)) == 2);
+           if isfield(obj.data, 'cycleTimes') && isfield(obj.data, 'wav_pressure')
+               if v>1; disp('cycleTimes and wav_pressure already set! Nothing to process!'); end
+               error('cycleTimes and wav_pressure are already both set!');
+           end
 
-           t_data = (1:length(obj.data.dat_pressure))/obj.Fs;
-           h_durs = diff([t_data(h_cycle_starts); t_data(h_cycle_ends)]);
-           good_h_cycles_ixs = find(h_durs > h_cycle_th);
-           h_good_cycle_starts = h_cycle_starts(good_h_cycles_ixs);
-           h_good_cycle_ends = h_cycle_ends(good_h_cycles_ixs);
+           if isfield(obj.data, 'cycleTimes') && ~isfield(obj.data, 'wav_pressure')
+               if v>1; disp('cycleTimes already set; extracting wav_pressure'); end
+               warning('Using pre-defined cycleTimes to extract wav_pressure');
+           end
 
-           cycleTimes = t_data([h_good_cycle_starts(1:end-1)' h_good_cycle_starts(2:end)']);
-           obj.data.cycleTimes = cycleTimes;
+           cycleTimes = [];
+           if ~isfield(obj.data, 'cycleTimes')
+               if v>1; disp('PROCESSING: Detecting cycles...'); end
+
+               % need to parameterize hilbert cycle threshold for duration
+               min_cycle_th = 0.2;
+
+               filt_dat = get_data(obj, 'filt_pressure');
+               t_data = get_data(obj, 'dat_ts');
+
+               if strcmp(obj.method, 'hilbert')
+                   if v>1; disp('Cycle detection method: Hilbert'); end
+              
+                   h_transform = hilbert(filt_dat);
+                   phase_data = atan2(imag(h_transform), real(h_transform));
+                    
+                   h_cycle_starts = find(diff(sign(phase_data+1e-6)) == -2);
+                   h_cycle_ends = find(diff(sign(phase_data+1e-6)) == 2);
+    
+                   if h_cycle_ends(1) < h_cycle_starts(1); h_cycle_ends(1) = []; end
+                   if h_cycle_starts(end) > h_cycle_ends(end); h_cycle_starts(end) = []; end
+        
+                   h_durs = diff([t_data(h_cycle_starts); t_data(h_cycle_ends)]);
+                   good_h_cycles_ixs = find(h_durs > min_cycle_th);
+                   h_good_cycle_starts = h_cycle_starts(good_h_cycles_ixs);
+                   h_good_cycle_ends = h_cycle_ends(good_h_cycles_ixs);
+       
+                   cycleTimes = t_data([h_good_cycle_starts(1:end-1)' h_good_cycle_starts(2:end)']);
+               elseif strcmp(obj.method, 'threshold')
+                   cycle_th = obj.threshold;
+                   if v>1; disp(['Cycle detection method: Threshold=' num2str(cycle_th)]); end
+
+                   wav_th_up_xing = find(diff(sign(filt_dat - cycle_th)) == 2);
+                   wav_th_dn_xing = find(diff(sign(filt_dat - cycle_th)) == -2);
+
+                   if wav_th_dn_xing(1) < wav_th_up_xing(1); wav_th_dn_xing(1) = []; end
+                   if wav_th_up_xing(end) > wav_th_dn_xing(end); wav_th_up_xing(end) = []; end
+
+                   th_durs = diff([t_data(wav_th_up_xing); t_data(wav_th_dn_xing)]);
+                   good_th_cycle_ixs = find(th_durs > min_cycle_th);
+
+                   th_good_cycle_starts = wav_th_up_xing(good_th_cycle_ixs);
+                   th_good_cycle_ends = wav_th_dn_xing(good_th_cycle_ixs);
+
+                   cycleTimes = t_data([th_good_cycle_starts(1:end-1)' th_good_cycle_starts(2:end)']);
+               end
+
+               add_data(obj, cycleTimes, '', Fs, 'cycleTimes');
+           end
+           cycleTimes = get_data(obj, 'cycleTimes');
 
 %            cycleTimes = obj.data.cycleTimes.data;
+           if v>2; disp('PROCESSING: Extracting waveforms...'); end
+           
+           filt_pressure = get_data(obj, 'filt_pressure');
+           dat_ts = get_data(obj, 'dat_ts');
+
            for c = 1:size(cycleTimes,1)
                 ts = cycleTimes(c,:);
-                if floor(Fs*ts(1)) > length(obj.data.filt_pressure) || ceil(Fs*ts(2)) > length(obj.data.filt_pressure); continue; end
 
-                wav_pressure{end+1} = [obj.data.filt_pressure(floor(Fs*ts(1)):ceil(Fs*ts(2)))];
+                if ts(1) < dat_ts(1); continue; end
+                start_ix = find(dat_ts <= ts(1));
+                start_ix = start_ix(end);
+
+                if ts(2) > dat_ts(end); break; end
+                end_ix = find(dat_ts >= ts(2));
+                end_ix = end_ix(1);
+
+                wav_pressure{end+1} = [filt_pressure(start_ix:end_ix)];
            end
 
            if length(wav_pressure) < size(cycleTimes,1)
@@ -477,9 +535,21 @@ classdef mi_data_pressure < mi_data_behavior
 
            if v>0; disp(['Extracted ' num2str(length(wav_pressure)) ' of ' num2str(size(cycleTimes,1)) ' cycle waveforms']); end
 
-           obj.data.wav_pressure = wav_pressure;
+           add_data(obj, wav_pressure, '', Fs, 'wav_pressure');
        end
        
+       function clear_behavior(obj)
+        % use this function to reset the cycleTimes and wav_pressure struct
+        % so that you can use a different cycle detection method.
+
+           s = input('Are you sure you want to clear the cycleTimes and wav_pressure? y/[n]', 's');
+
+           if strcmp(s,'y') || strcmp(s,'Y')
+               obj.data = rmfield(obj.data, 'cycleTimes');
+               obj.data = rmfield(obj.data, 'wav_pressure');
+           end
+       end
+
        function [filterData] = filterBehavior(obj, behavior, cycleFreq, filterFreq)
            
             v = obj.verbose;
@@ -558,11 +628,12 @@ classdef mi_data_pressure < mi_data_behavior
             
             if v>1; disp([newline '--> Getting formatted behavioral data...']); end
             
+            wav_pressure = get_data(obj, 'wav_pressure');
             switch(timeBase)
                 case('time')
                     if v>2; disp([newline '--> --> Formatting behavior: time']); end
                     % Find the lengths of the cycles in samples
-                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), obj.data.wav_pressure, 'UniformOutput', false));
+                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), wav_pressure, 'UniformOutput', false));
 
                     % Find the sample associated with the start time for each
                     % cycle in ms
@@ -592,7 +663,7 @@ classdef mi_data_pressure < mi_data_behavior
                     for cycle_ix = 1:nCycles
                        % Document all of the data points for the window of
                        % interest
-                       dat = obj.data.wav_pressure{cycle_ix};
+                       dat = wav_pressure{cycle_ix};
                        if length(dat) >= stop_samples
                            cycle_data = dat(start_samples:stop_samples);
                            % Resample to get only the desired number of points
@@ -611,7 +682,7 @@ classdef mi_data_pressure < mi_data_behavior
                 case('phase')
                     if v>2; disp([newline '--> --> Formatting behavior: phase']); end
                     % Find the lengths of the cycles in samples
-                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), obj.data.wav_pressure, 'UniformOutput', false));
+                    cycleLengths_samples = cell2mat(cellfun(@(x) length(x), wav_pressure, 'UniformOutput', false));
 
                     % Find the sample associated with the start phase for each
                     % cycle
@@ -644,7 +715,7 @@ classdef mi_data_pressure < mi_data_behavior
                         % Document all of the data points for the window of
                         % interest
                         if stop_samples(cycle_ix) > start_samples(cycle_ix)
-                            dat = obj.data.wav_pressure{cycle_ix};
+                            dat = wav_pressure{cycle_ix};
                             cycle_data = dat(start_samples(cycle_ix):stop_samples(cycle_ix));
 
                             newSamples = round(linspace(1,length(cycle_data),nSamp));
@@ -668,7 +739,7 @@ classdef mi_data_pressure < mi_data_behavior
                 case('pca')
                     if v>2; disp([newline '--> --> Processing behavior: PCA (' num2str(nPC) ') PCs']); end
                     [~,score,~] = pca(cycle_behavior);
-                    r = score(:,1:nPC);
+                    r = score(:,1:nPC)';
                 case('residual')
                     if v>2; disp([newline '--> --> Processing behavior: residual']); end
                     r = cycle_behavior - mean(cycle_behavior,1,'omitnan');     

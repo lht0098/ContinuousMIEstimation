@@ -1,6 +1,7 @@
 % setup behavior object
 
 standard_fileInfo = '20200422_bl21lb21_example_data';
+
 behav_fileInfo = strcat('example script/', datestr(date, 'mmddyyyy'));
 
 load('/Users/brycechung/Documents/GitHub/ContinuousMIEstimation/ExampleFileandScripts/Example File and Scripts/20200422_bl21lb21_example_data.mat', 'final_cycle_times');
@@ -14,7 +15,7 @@ b.set_calibration('slope', 15.4467, 'first_file_mean', 1.5336, 'pressure_offset'
 
 b.build_behavior();
 
-b.add_cycleTimes(final_cycle_times', strcat(standard_fileInfo, datestr(date, 'mmddyyyy')), 30000);
+% b.add_cycleTimes(final_cycle_times', strcat(standard_fileInfo, datestr(date, 'mmddyyyy')), 30000);
 
 b.process_behavior();
 
@@ -25,7 +26,7 @@ b.process_behavior();
 
 %% Time | raw
 start = 1;
-dur= 300;
+dur= 200;
 samps = 100;
 
 x = b.get_behavior('time', 'raw', start, dur, samps);
@@ -34,7 +35,7 @@ dur_samples = ceil(dur*30000/1000.);
 stop_samples = start_samples + dur_samples;
 
 ix = 1;
-tmp_dat = b.data.wav_pressure{ix}(start_samples:stop_samples);
+tmp_dat = b.data.wav_pressure.data{ix}(start_samples:stop_samples);
 newSamples = round(linspace(1,length(tmp_dat),samps));
 
 figure();
@@ -42,7 +43,7 @@ plot(x');
 title('Resampled Waveforms - Time: Raw')
 
 figure();
-plot(b.data.wav_pressure{1}, 'k-', 'LineWidth', 2);
+plot(b.data.wav_pressure.data{1}, 'k-', 'LineWidth', 2);
 hold on;
 scatter(newSamples+start_samples, x(1,:), 'ro');
 title('Resampling verification - Time Raw');

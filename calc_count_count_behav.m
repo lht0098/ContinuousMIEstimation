@@ -7,6 +7,8 @@ classdef calc_count_count_behav < mi_analysis
         dur
         nSamp
         nPC
+
+        discard_omittedData = 0; %RC - not relevant for count_count subclass, but necessary for mi_analysis to run. 
     end
     
     methods
