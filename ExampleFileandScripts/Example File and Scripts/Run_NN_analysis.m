@@ -1,6 +1,13 @@
 %% Load Data objects
 % NOTE- INSERT NAME OF DATA OBJECT
-load('20200427_bl21lb21_06032020data.mat')
+
+% fix to set unix search path
+PATH = getenv('PATH');
+setenv('PATH', [PATH ''])
+
+%%
+
+load('2020bl21lb21_example_data07292020dataObjs.mat')
 
 save_str = '20200427_bl21lb21_06032020data';
 

@@ -1,12 +1,14 @@
 /kraskovStoegbauerGrassberger/miutils.o:/kraskovStoegbauer/Grassberger/MIxnyn
 *.mat
 *.txt
-*.txt
-ExampleFileandScripts/Example File and Scripts/20200427_bl21lb21_04052022unitDunitG_analysis_c1c2.mat
-ExampleFileandScripts/Example File and Scripts/20200427_bl21lb21_04052022unitDunitG_analysis_c1c2.mat
-ExampleFileandScripts/Example File and Scripts/20200427_bl21lb21_04052022unitDunitG_analysis_c1c2.mat
-ExampleFileandScripts/Example File and Scripts/test_weighted_k.m
-ExampleFileandScripts/Example File and Scripts/test_weighted_k_2.m
-ExampleFileandScripts/Example File and Scripts/test_weighted_k_3.m
-ExampleFileandScripts/Example File and Scripts/test_weighted_k_4.m
-ExampleFileandScripts/Example File and Scripts/zwspMIxnyn-159E1.txt
+mi_data_pressure.asv
+read_Intan_RHD2000_nongui_adc.m
+ExampleFileandScripts/Example File and Scripts/20200422_bl21lb21_example_data06232022dataObjs.mat
+kraskovStoegbauerGrassberger/20200701_bl21lb21_070121_unitD-behav_c1b_dataFracFig_1.png
+kraskovStoegbauerGrassberger/milca
+kraskovStoegbauerGrassberger/miutils.o
+kraskovStoegbauerGrassberger/MIxnyn
+kraskovStoegbauerGrassberger/milca
+kraskovStoegbauerGrassberger/MIxnyn.exe
+kraskovStoegbauerGrassberger/milca
+

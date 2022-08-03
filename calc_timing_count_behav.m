@@ -12,6 +12,8 @@ classdef calc_timing_count_behav < mi_analysis
         nSamp
         nPC
         discard_omittedData
+
+        discard_omittedData = 0; %RC - not relevant for count_count subclass, but necessary for mi_analysis to run. 
     end
     
     methods
