@@ -1,0 +1,43 @@
+%% Replace the sigma string in the k plot files 
+
+clear all
+
+% Get all the png files in the folder 
+files = dir('*png') ; 
+
+% List of sigma strings that need to be changed 
+sigma_string = {'sig_15', 'sig_30', 'sig_60', 'sig_90'};
+
+newSigma_string = {'sig15', 'sig30', 'sig60', 'sig90'};
+
+% SET THE SIGMA THAT WILL BE CHANGED 
+sigma = num2str(cell2mat(sigma_string(1))); 
+
+% Go through all of the files and change only the sigma string
+for i = 1:length(files)
+    front_string = extractBefore(files(i).name, sigma);
+    back_string = extractAfter(files(i).name, sigma);
+    newName = [front_string, sigma, back_string]; 
+    movefile(files(i).name, newName)
+end
+
+%% Replace the sigma string in the mat files 
+
+clearvars -except sigma
+
+% Get all the png files in the folder 
+files = dir('*mat') ; 
+
+% List of sigma strings that need to be changed 
+sigma_string = {'sig_15', 'sig_30', 'sig_60', 'sig90'};
+
+% SET THE SIGMA THAT WILL BE CHANGED 
+sigma = num2str(cell2mat(sigma_string(1))); 
+
+% Go through all of the files and change only the sigma string
+for i = 1:length(files)
+    front_string = extractBefore(files(i).name, sigma);
+    back_string = extractAfter(files(i).name, sigma);
+    newName = [front_string, 'sig15', back_string]; 
+    movefile(files(i).name, newName)
+end
