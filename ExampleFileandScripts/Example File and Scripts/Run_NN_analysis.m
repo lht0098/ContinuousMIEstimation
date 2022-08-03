@@ -1,12 +1,12 @@
 %% Load Data objects
 % NOTE- INSERT NAME OF DATA OBJECT
-load('2020bl21lb21_example_data07292020dataObjs.mat')
+load('20200427_bl21lb21_06032020data.mat')
 
-save_str = '20200422_bl21lb21_example_analysis';
+save_str = '20200427_bl21lb21_06032020data';
 
 %Set analysis variables of interest
 unit1_name = 'unitD';
-unit2_name = 'unitG';
+unit2_name = 'unitG';  
 
 % NOTE- SAVE A COPY OF THE SCRIPT WITH A NEW DATA AND UNIT NAMES AFTER
 % REVISING THE VARIABLES ABOVE
@@ -20,6 +20,9 @@ verbose_level = 5;
 a_cc = calc_count_count(d, b, {unit1_name , unit2_name}, 'verbose', verbose_level);
 
 a_cc.buildMIs();
+
+% 20220709 LHT + BC:
+% a_cc.arrMIcore{1, 1}.y = a_cc.arrMIcore{1, 1}.y(randperm(length(a_cc.arrMIcore{1, 1}.y)));
 
 a_cc.calcMIs();
 
@@ -57,7 +60,7 @@ save(strcat(save_str, datestr(date, 'mmddyyyy'), unit1_name, unit2_name, '_analy
 %% Construct TT analysis object and run estimates
 
 % Construct mi_analysis object
-a_tt = calc_timing_timing(d, b, {unit1_name , unit2_name}, 'verbose', 5);
+a_tt = calc_timing_timing(d, b, {unit1_name , unit2_name}, 'verbose', verbose_level);
 
 a_tt.buildMIs();
 
