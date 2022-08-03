@@ -65,8 +65,29 @@ classdef mi_ksg_viz < handle
                 fig = figure(f);
             end
             
+            % BC and LHT edit: 70-86
+
+            if all(mod(obj_core.x,1)  == 0)
+                x_dat = obj_core.x + normrnd(0, 1e-1, size(obj_core.x, 1), size(obj_core.x, 2)); 
+            else 
+                x_dat = obj_core.x;
+            end 
+
+            if all(mod(obj_core.y,1)  == 0)
+                y_dat = obj_core.y + normrnd(0, 1e-1, size(obj_core.y, 1), size(obj_core.y, 2)); 
+            else 
+                y_dat = obj_core.y;
+            end 
+
+            if size(x_dat, 2) > 1 || size(y_dat, 2) > 1
+                c = jet(max([size(x_dat, 2) size(y_dat, 2)]));
+            else 
+                c = 'b';
+            end 
+
             ax = subplot(1,1,1);
-            r_plot = scatter(ax, obj_core.x, obj_core.y, 15, 'b', 'filled');
+            % r_plot = scatter(ax, obj_core.x, obj_core.y, 15, 'b', 'filled');
+            r_plot = scatter(ax, x_dat, y_dat, 10, c, 'filled', 'MarkerFaceAlpha', .5 );
             xlabel('x');
             ylabel('y');
             title({'Kraskov-Stoegbauer-Grassberger' 'Nearest-Neighbors Plot'});
@@ -83,12 +104,16 @@ classdef mi_ksg_viz < handle
     methods(Static)
         
         % Audit Plots from mi_analysis class
+        % function audit_plots(mi_analysis, save_plots, save_str)
         function audit_plots(mi_analysis)
             
 	    % Iterating through the core objects
             for iGroup = 1:size(mi_analysis.arrMIcore,1)
                 coreObj = mi_analysis.arrMIcore{iGroup,1};
                 
+                % BC and LHT edit:
+                if isempty(coreObj.x) || isempty(coreObj.y); continue; end
+
                 % FOR NOW, NO AUDIT PLOTS FOR BEHAVIOR SUBCLASSES
                 if contains(class(mi_analysis), 'behav')
                     continue
@@ -103,27 +128,29 @@ classdef mi_ksg_viz < handle
 
                     % 20220609 LHT: don't display figure
                     % figure()
-                    figure('visible', 'off')
+                    figure('visible', 'on')
 
                     histogram(x)
                     hold on
                     xlabel('X Value (binned)')
                     ylabel('N Cycles')
-                    title('Histogram for X')
+                    title({['Group ' num2str(iGroup)] 'Histogram for X'})
+                    %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-histX.png']); end
 
                     % Histogram for y
                     y = coreObj.y;
 
                     % 20220609 LHT: don't display figure
                     % figure()
-                    figure('visible', 'off')
+                    figure('visible', 'on')
                     
                     histogram(y)
                     hold on
                     xlabel('Y Value (binned)')
                     ylabel('N Cycles')
-                    title('Histogram for Y')
-                    
+                    title({['Group ' num2str(iGroup)] 'Histogram for Y'})
+                    %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-histY.png']); end
+
                     % For multidimensional data
                     if all(size(x) > 1) & all(size(y) > 1)
                         % Plot the first pc1x and pc1y against each other
@@ -137,39 +164,42 @@ classdef mi_ksg_viz < handle
 
                         % 20220609 LHT: don't display figure
                         % figure()
-                        figure('visible', 'off')
+                        figure('visible', 'on')
                         
                         scatter(scorex(:,1), scorey(:,1), 'x');
                         axis equal; 
                         xlabel('1st X Principle Component')
                         ylabel('1st Y Principle Component')
-                        title('PCA Joint Plot')
+                        title({['Group ' num2str(iGroup)] 'PCA Joint Plot'})
+                        %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-jointPCA.png']); end
                         
                         % Plot variability in x components
 
                         % 20220609 LHT: don't display figure
                         % figure()
-                        figure('visible', 'off')
+                        figure('visible', 'on')
                         
                         cumsumx = sum(latentx);
                         perVarx = latentx / cumsumx;
                         bar(perVarx)
                         xlabel('Principle Component')
                         ylabel('Percent Variability Explained')
-                        title('Scree Plot for X')
+                        title({['Group ' num2str(iGroup)] 'Scree Plot for X'})
+                        %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-screeX.png']); end
                         
                         % Plot variability in y components
 
                         % 20220609 LHT: don't display figure, save it
                         % figure()
-                        figure('visible', 'off')
+                        figure('visible', 'on')
 
                         cumsumy = sum(latenty);
                         perVary = latenty / cumsumy;
                         bar(perVary)
                         xlabel('Principle Component')
                         ylabel('Percent Variability Explained')
-                        title('Scree Plot for Y')
+                        title({['Group ' num2str(iGroup)] 'Scree Plot for Y'})
+                        %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-screeY.png']); end
                     else
                         % Check for discrete data in both variables
                         if all(all(rem(x,1) == 0)) & all(all(rem(y,1) == 0))
@@ -189,34 +219,35 @@ classdef mi_ksg_viz < handle
 
                                 % 20220609 LHT: don't display figure
                                 % figure()
-                                figure('visible', 'off')
+                                figure('visible', 'on')
 
                                 scatter(x_plot, y_plot, 'x');
                                 axis equal;
                                 set(gca, 'XLim', pts([1 end]), 'YLim', pts([1 end]));
                                 xlabel('Discrete Value: X')
                                 ylabel('Discrete Value: Y')
-                                title('P(X,Y) Discrete Joint Distribution')
+                                title({['Group ' num2str(iGroup)] 'P(X,Y) Discrete Joint Distribution'})
+                                %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-discreteJoint.png']); end
 
                                 % Plot heatmap:
 
                                 % 20220609 LHT: don't display figure
                                 % figure()
-                                figure('visible', 'off')
+                                figure('visible', 'on')
 
                                 imagesc(pts, pts, N);
                                 axis equal;
                                 set(gca, 'XLim', pts([1 end]), 'YLim', pts([1 end]), 'YDir', 'normal');
                                 xlabel('Discrete Value: X')
                                 ylabel('Discrete Value: Y')
-                                title('P(X,Y) Density Map')
+                                title({['Group ' num2str(iGroup)] 'P(X,Y) Density Map'})
                                 cBar = colorbar('Direction', 'normal', 'Ticks', 1:max(N, [], 'all'));
                                 cBar.Label.String = "log(# of data points)";
+                                %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-density.png']); end
                             catch
                                 continue
                             end
-                            
-                            
+                              
                         elseif all(all(rem(x,1) == 0)) | all(all(rem(y,1) == 0))
                             % Try to catch any empty vectors. 
                             try
@@ -240,13 +271,14 @@ classdef mi_ksg_viz < handle
 
                                 % 20220609 LHT: don't display figure
                                 % figure()
-                                figure('visible', 'off')
+                                figure('visible', 'on')
 
                                 plot(x_plot, y_plot, 'x')
                                 hold on
                                 xlabel(x_L)
                                 ylabel(y_L)
-                                title('P(X,Y) Mixed Joint Distribution')
+                                title({['Group ' num2str(iGroup)] 'P(X,Y) Mixed Joint Distribution'})
+                                %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-mixJoint.png']); end
                             catch
                                 continue
                             end
@@ -257,13 +289,14 @@ classdef mi_ksg_viz < handle
 
                                 % 20220609 LHT: don't display figure
                                 % figure()
-                                figure('visible', 'off')
+                                figure('visible', 'on')
 
                                 plot(x,y, 'x')
                                 hold on
                                 xlabel('Continuous Variable: X')
                                 ylabel('Continuous Variable: Y')
-                                title('P(X,Y) Continuous Joint Distribution')
+                                title({['Group ' num2str(iGroup)] 'P(X,Y) Continuous Joint Distribution'})
+                                %if save_plots; saveas(gcf, [save_str '_Group' num2str(iGroup) '-contJoint.png']); end
                             
                             catch
                                 continue
