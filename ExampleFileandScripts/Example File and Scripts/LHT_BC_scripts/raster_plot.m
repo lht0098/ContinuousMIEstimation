@@ -5,7 +5,7 @@ clear all
 load('20200427_bl21lb21_06032020data.mat')
 
 % Set the unit of interest 
-unit = 'unitD'
+unit = 'unitB';
 
 % Get the cycle times
 cycleTimes = b.data.cycleTimes.data;
@@ -21,27 +21,50 @@ for i = 1:size(timeDiff, 1)
     timeDiff(i, 1) = cycleTimes(i, 2) - cycleTimes(i, 1);
 end 
 
-% Create an empty array of NaNs
-spikes_per_cycle = NaN(size(cycleTimes, 1), 8);
+% Initiate an array to hold the number of max spikes per cycle
+cycleMax = NaN(size(cycleTimes, 1), 1);
 
-for i = 1:size(spikes_per_cycle, 1)
+for i = 1:size(cycleMax, 1)
     
     % Set the range of interest 
     cycleStart = cycleTimes(i, 1);
     cycleEnd = cycleTimes(i, 2);
 
+    % Find spike times that are less than the start and
+    % the end of the cycle
     idx = spikeTimes >= cycleStart & spikeTimes <= cycleEnd;
     
     % Find the column indexes of the spike times in the cycle of interest
     column_idx = find(idx);
-    spikes_cycle = spikeTimes(column_idx);
+    spikes_cycle{i,1} = spikeTimes(column_idx);
+    
+    % Get the number of max spikes per cycle 
+    cycleMax(i) = size(spikes_cycle{i}, 2);
 
-    column_diff = size(spikes_per_cycle, 2) - size(column_idx, 2);
-
-    spikes_per_cycle(i,:) = horzcat(spikes_cycle, NaN(1, column_diff));
 end
 
-offset_spikes = NaN(size(cycleTimes, 1), 8);
+% Find the greatest number of spikes a cycle can have
+maxSpikes = max(cycleMax);
+
+% Create an empty array of NaNs
+spikes_per_cycle = NaN(size(cycleTimes, 1), maxSpikes);
+
+total_spikes = NaN(size(cycleTimes, 1), 1);
+
+for i = 1:size(spikes_per_cycle, 1)
+
+    % Get the number of spikes in the cycle
+    num_spikes = size(spikes_cycle{i}, 2);
+
+    total_spikes(i, 1) = num_spikes;
+
+    % Replace the NaNs with spikes times
+    spikes_per_cycle(i, 1:num_spikes) = cell2mat(spikes_cycle(i,:));
+
+end
+
+% Create an array to hold the offset spike times
+offset_spikes = NaN(size(spikes_per_cycle, 1), size(spikes_per_cycle, 2));
 
 for i = 1:size(offset_spikes, 1)
     offset_spikes(i,:) = spikes_per_cycle(i,:) - cycleTimes(i, 1);
@@ -55,7 +78,7 @@ for i = 1:size(offset_spikes, 1)
     spike_idx = find(~isnan(offset_spikes(i,:)));
     
     % Create a circle for every spike time in the cycyle
-    plot([offset_spikes(i, spike_idx)], i.* ones(1, length(spike_idx)), linestyle = 'none', marker = 'o', color = 'b')
+    plot([offset_spikes(i, spike_idx)], i.* ones(1, length(spike_idx)), linestyle = 'none', marker = '.', color = 'm')
 
     % Keep each line from each trial
     hold on 
