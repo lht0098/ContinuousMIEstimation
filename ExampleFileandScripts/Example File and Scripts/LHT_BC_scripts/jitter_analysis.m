@@ -8,8 +8,8 @@ clear all
 % Load the data object that contains the units:
 load('20200427_bl21lb21_06032020data.mat')
 
-% Set the unit of interest
-unit = 'unitD';
+% Set the unit of interest 
+unit = 'unitG'; % CHANGE
 
 % Get the unit's spike train
 spikeTrain = getfield(d, 'data', unit, 'data');
@@ -19,17 +19,20 @@ spikeTrain = getfield(d, 'data', unit, 'data');
 
 % Set the mean and standard deivation parameter
 mu = 0;
-sigma = 0.02;
+sigma = 1800; % CHANGE
 
 % Create the guassian noise array
 noise = normrnd(mu, sigma, size(spikeTrain, 1), size(spikeTrain, 2));
 
 % Add that gaussian nosie to the spike train 
-
 noisy_spikeTrain = spikeTrain + noise;
 
+% Apply a randome permutation to the spike train
+% noisy_spikeTrain = spikeTrain(randperm(length(spikeTrain)));
+
 figure()
-plot(noise)
+
+histogram(noise)
 
 %% Create a new name for the copy of the data object that will contain the 
 % corrupted unit: 
@@ -43,15 +46,15 @@ str_mu(strfind(str_mu, '.')) = [];
 str_sigma(strfind(str_sigma, '.')) = [];
 
 % Create the new name for the corrupted data object file
-corrupt_file = ['20200427_bl21lb21_06032020data' '_' unit '_mu' str_mu '_sig' str_sigma '.mat' ];
+jitter_file = ['20200427_bl21lb21_06032020data' '_' unit '_mu' str_mu '_sig' str_sigma '_' '.mat' ];
 
 % Create a copy of the source data object 
-copyfile('20200427_bl21lb21_06032020data.mat', corrupt_file);
+copyfile('20200427_bl21lb21_06032020data.mat', jitter_file);
 
 %% Input the corrupted unit into the copy of the data object
 
 % Load the copy of the data object
-load(corrupt_file);
+load(jitter_file);
 
 % Delete the uncorrupted spike train
 d.data.(unit) = rmfield(d.data.(unit), 'data');
@@ -59,19 +62,8 @@ d.data.(unit) = rmfield(d.data.(unit), 'data');
 % Input the corrupted spike train into the copy of the data object
 d.data.(unit).data = noisy_spikeTrain;
 
-% Save the changes to the field
-save(corrupt_file);
+% Clear all the variables 
+% clearvars -except b d jitter_file noise
 
-%% Use that jitter spike train to rerun all analyses with the other uncorrupted spike
-%trains
-
-% Get the mutual information for all of the analysis objects 
-
-a_cc.returnMIs
-
-a_tc.returnMIs
-
-a_tt.returnMIs
-
-%% Result: series of bar plots that are data unjittered and data not
-% jittered: 
+% Save the changes made to the file
+save(jitter_file, 'b', 'd');
