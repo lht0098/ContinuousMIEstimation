@@ -301,8 +301,8 @@ classdef mi_analysis < handle
                 if ~ismembertol(test_val, 1, 1e-12); error('Error: Re-weighted probability terms do not sum to one.'); end
             end
             
-            % LHT EDIT 20220803: matlab2022a deprecated
-            % var_tot = sum(var_sum_vec, 'omitnan');
+            % BC EDIT 20220803: matlab2022a deprecated
+            % r.mi = nansum(MIs.*prob_vec);
             var_tot = nansum(var_sum_vec);
             r.err = var_tot^0.5;
         end
